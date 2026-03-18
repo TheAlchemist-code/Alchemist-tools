@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Alchemist — Weekly Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f0e8;
+    --surface: #ede8dc;
+    --surface2: #e5dfd0;
+    --border: #d4cbb8;
+    --border2: #c4b8a0;
+    --gold: #8b6914;
+    --gold2: #6b4f0a;
+    --text: #1a1612;
+    --text2: #4a4030;
+    --text3: #8a7860;
+    --green: #2d6b45;
+    --green2: #3d8a5a;
+    --red: #8b3a3a;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .header-left h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--gold2);
+  }
+
+  .header-left .week-label {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .progress-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .progress-bar-wrap {
+    width: 80px;
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-count {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 500;
+    min-width: 40px;
+  }
+
+  .btn-reset {
+    font-size: 10px;
+    color: var(--text3);
+    background: none;
+    border: 1px solid var(--border2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .btn-reset:hover { color: var(--text2); border-color: var(--border2); }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .day-col {
+    border-right: 1px solid var(--border);
+    padding: 0;
+  }
+
+  .day-col:last-child { border-right: none; }
+
+  .day-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .day-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--text);
+  }
+
+  .day-name.today { color: var(--gold2); }
+
+  .day-shift {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .day-shift:hover { border-color: var(--gold); color: var(--gold); }
+  .day-shift.early { border-color: #4a6b8a; color: #6a9bc4; }
+  .day-shift.late { border-color: #6b4a8a; color: #9a6ac4; }
+  .day-shift.fp { border-color: var(--green); color: var(--green2); }
+  .day-shift.adm { border-color: #8a6a4a; color: #c49a6a; }
+
+  .task-list {
+    padding: 10px 0;
+    min-height: 140px;
+  }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    group: true;
+  }
+
+  .task-item:hover { background: var(--surface2); }
+
+  .task-check {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .task-item.done .task-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .task-item.done .task-check::after {
+    content: '';
+    width: 8px;
+    height: 5px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+
+  .task-text {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.4;
+    flex: 1;
+    transition: all 0.2s;
+  }
+
+  .task-item.done .task-text {
+    text-decoration: line-through;
+    color: var(--text3);
+  }
+
+  .task-tag {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+
+  .tag-deen { background: #d4eadc; color: #2d6b45; }
+  .tag-career { background: #d4dcea; color: #2d456b; }
+  .tag-train { background: #ead4d4; color: #6b2d2d; }
+  .tag-school { background: #eae4d4; color: #6b5a2d; }
+
+  .add-task {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px 10px;
+  }
+
+  .add-task input {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 3px 0;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .add-task input::placeholder { color: var(--text3); }
+  .add-task input:focus { border-color: var(--gold); }
+
+  .add-task select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 10px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 3px 6px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .add-btn {
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: opacity 0.15s;
+  }
+
+  .add-btn:hover { opacity: 0.7; }
+
+  .weekend-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .weekend-col {
+    border-right: 1px solid var(--border);
+    padding: 0;
+  }
+
+  .weekend-col:last-child { border-right: none; }
+
+  .notes-section {
+    padding: 14px 16px;
+  }
+
+  .section-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .notes-area {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.7;
+    resize: none;
+    outline: none;
+    min-height: 80px;
+  }
+
+  .notes-area::placeholder { color: var(--text3); }
+
+  .small-tasks {
+    padding: 14px 16px;
+    border-left: 1px solid var(--border);
+    grid-column: span 2;
+  }
+
+  .small-task-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .small-task-input input {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 3px 0;
+    outline: none;
+  }
+
+  .small-task-input input:focus { border-color: var(--gold); }
+
+  .small-task-list { list-style: none; }
+
+  .small-task-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .small-task-list li:last-child { border-bottom: none; }
+
+  .small-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .small-task-list li.done-small .small-dot { background: var(--green); }
+  .small-task-list li.done-small span { text-decoration: line-through; color: var(--text3); }
+
+  .goals-section {
+    padding: 16px 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  .goals-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .goals-inputs {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+
+  .goal-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .goal-num {
+    font-size: 10px;
+    color: var(--text3);
+    flex-shrink: 0;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .goal-input {
+    flex: 1;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    padding: 3px 0;
+    outline: none;
+  }
+
+  .goal-input:focus { border-color: var(--gold); }
+  .goal-input::placeholder { color: var(--text3); }
+
+  .ayah-bar {
+    padding: 10px 32px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 12px;
+    color: var(--text3);
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<div style="padding: 16px 32px; text-align: center; border-bottom: 1px solid var(--border); background: var(--surface);">
+  <div style="font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--gold2); letter-spacing: 0.04em; margin-bottom: 6px;">
+    الاعتبار بكمال النهاية لا بنقص البداية
+  </div>
+  <div style="font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--text3); letter-spacing: 0.04em; font-style: italic;">
+    "The true consideration is given to the perfection of the ending, not the imperfection of the beginning." — Ibn Taymiyyah rahimahullah
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-left">
+    <h1>⚗ Weekly Planner</h1>
+    <div class="week-label" id="week-label">Loading...</div>
+  </div>
+  <div class="header-right">
+    <div class="progress-summary">
+      <span>Progress</span>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+      <span class="progress-count" id="progress-count">0 / 0</span>
+    </div>
+    <button class="btn-reset" onclick="resetWeek()">Reset week</button>
+  </div>
+</div>
+
+<div class="main-grid" id="main-grid">
+</div>
+
+<div class="weekend-row" id="weekend-row">
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-bottom:1px solid var(--border)">
+  <div class="notes-section" style="grid-column:span 2">
+    <div class="section-label">Notes</div>
+    <textarea class="notes-area" id="notes-area" placeholder="Write anything for this week..." rows="4" oninput="saveNotes()"></textarea>
+  </div>
+  <div class="small-tasks" style="grid-column:span 2">
+    <div class="section-label">Quick tasks</div>
+    <div class="small-task-input">
+      <input type="text" id="small-input" placeholder="Add a quick task..." onkeydown="if(event.key==='Enter')addSmallTask()">
+      <button class="add-btn" onclick="addSmallTask()">+</button>
+    </div>
+    <ul class="small-task-list" id="small-task-list"></ul>
+  </div>
+</div>
+
+<div class="goals-section">
+  <div class="goals-label">This week's goals</div>
+  <div class="goals-inputs">
+    <div class="goal-item"><span class="goal-num">I.</span><input class="goal-input" placeholder="First priority..." oninput="saveGoals()" id="goal1"></div>
+    <div class="goal-item"><span class="goal-num">II.</span><input class="goal-input" placeholder="Second priority..." oninput="saveGoals()" id="goal2"></div>
+    <div class="goal-item"><span class="goal-num">III.</span><input class="goal-input" placeholder="Third priority..." oninput="saveGoals()" id="goal3"></div>
+  </div>
+</div>
+
+<div class="ayah-bar">
+  الاعتبار بكمال النهاية لا بنقص البداية — Ibn Taymiyyah rahimahullah
+</div>
+
+<script>
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const WEEKEND = ['Saturday','Sunday'];
+const SHIFTS = ['—','Early','Late','FP','ADM'];
+const TAGS = ['—','Deen','Career','Training','School'];
+const TAG_CLASS = {'Deen':'tag-deen','Career':'tag-career','Training':'tag-train','School':'tag-school'};
+
+let state = JSON.parse(localStorage.getItem('alchemist-planner') || '{}');
+
+function save() { localStorage.setItem('alchemist-planner', JSON.stringify(state)); }
+
+function getWeek() {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay() + 1);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  return `Week of ${fmt(start)} — ${fmt(end)}`;
+}
+
+function isToday(day) {
+  const map = {Monday:1,Tuesday:2,Wednesday:3,Thursday:4,Friday:5,Saturday:6,Sunday:0};
+  return new Date().getDay() === map[day];
+}
+
+function updateProgress() {
+  const allTasks = [...document.querySelectorAll('.task-item')];
+  const done = allTasks.filter(t => t.classList.contains('done')).length;
+  const total = allTasks.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-count').textContent = `${done} / ${total}`;
+}
+
+function buildDay(day, container) {
+  if (!state[day]) state[day] = { shift: '—', tasks: [] };
+  const d = state[day];
+
+  const col = document.createElement('div');
+  col.className = 'day-col';
+
+  const shiftClass = {Early:'early',Late:'late',FP:'fp',ADM:'adm'}[d.shift] || '';
+  col.innerHTML = `
+    <div class="day-header">
+      <span class="day-name ${isToday(day)?'today':''}">${day}</span>
+      <span class="day-shift ${shiftClass}" onclick="cycleShift('${day}',this)">${d.shift}</span>
+    </div>
+    <div class="task-list" id="tasks-${day}"></div>
+    <div class="add-task">
+      <input type="text" placeholder="Add task..." id="input-${day}" onkeydown="if(event.key==='Enter')addTask('${day}')">
+      <select id="tag-${day}">
+        ${TAGS.map(t=>`<option>${t}</option>`).join('')}
+      </select>
+      <button class="add-btn" onclick="addTask('${day}')">+</button>
+    </div>
+  `;
+  container.appendChild(col);
+  renderTasks(day);
+}
+
+function renderTasks(day) {
+  const list = document.getElementById(`tasks-${day}`);
+  if (!list) return;
+  list.innerHTML = '';
+  (state[day].tasks || []).forEach((task, i) => {
+    const item = document.createElement('div');
+    item.className = 'task-item' + (task.done ? ' done' : '');
+    item.innerHTML = `
+      <div class="task-check"></div>
+      <span class="task-text">${task.text}</span>
+      ${task.tag && task.tag !== '—' ? `<span class="task-tag ${TAG_CLASS[task.tag]||''}">${task.tag}</span>` : ''}
+    `;
+    item.onclick = () => toggleTask(day, i);
+    list.appendChild(item);
+  });
+  updateProgress();
+}
+
+function toggleTask(day, i) {
+  state[day].tasks[i].done = !state[day].tasks[i].done;
+  save();
+  renderTasks(day);
+}
+
+function addTask(day) {
+  const input = document.getElementById(`input-${day}`);
+  const tagEl = document.getElementById(`tag-${day}`);
+  const text = input.value.trim();
+  if (!text) return;
+  if (!state[day]) state[day] = { shift: '—', tasks: [] };
+  state[day].tasks.push({ text, tag: tagEl.value, done: false });
+  input.value = '';
+  save();
+  renderTasks(day);
+}
+
+function cycleShift(day, el) {
+  const i = (SHIFTS.indexOf(state[day].shift) + 1) % SHIFTS.length;
+  state[day].shift = SHIFTS[i];
+  const cls = {Early:'early',Late:'late',FP:'fp',ADM:'adm'};
+  el.className = 'day-shift ' + (cls[state[day].shift] || '');
+  el.textContent = state[day].shift;
+  save();
+}
+
+function addSmallTask() {
+  const input = document.getElementById('small-input');
+  const text = input.value.trim();
+  if (!text) return;
+  if (!state.smallTasks) state.smallTasks = [];
+  state.smallTasks.push({ text, done: false });
+  input.value = '';
+  save();
+  renderSmallTasks();
+}
+
+function renderSmallTasks() {
+  const list = document.getElementById('small-task-list');
+  list.innerHTML = '';
+  (state.smallTasks || []).forEach((t, i) => {
+    const li = document.createElement('li');
+    li.className = t.done ? 'done-small' : '';
+    li.innerHTML = `<span class="small-dot"></span><span>${t.text}</span>`;
+    li.onclick = () => { state.smallTasks[i].done = !state.smallTasks[i].done; save(); renderSmallTasks(); };
+    list.appendChild(li);
+  });
+}
+
+function saveNotes() {
+  state.notes = document.getElementById('notes-area').value;
+  save();
+}
+
+function saveGoals() {
+  state.goals = [
+    document.getElementById('goal1').value,
+    document.getElementById('goal2').value,
+    document.getElementById('goal3').value
+  ];
+  save();
+}
+
+function resetWeek() {
+  if (!confirm('Reset all tasks for this week?')) return;
+  DAYS.forEach(d => { if(state[d]) state[d].tasks = []; });
+  WEEKEND.forEach(d => { if(state[d]) state[d].tasks = []; });
+  state.smallTasks = [];
+  state.notes = '';
+  state.goals = ['','',''];
+  save();
+  init();
+}
+
+function init() {
+  document.getElementById('week-label').textContent = getWeek();
+  const main = document.getElementById('main-grid');
+  main.innerHTML = '';
+  DAYS.forEach(d => buildDay(d, main));
+  const wk = document.getElementById('weekend-row');
+  wk.innerHTML = '';
+  WEEKEND.forEach(d => buildDay(d, wk));
+  renderSmallTasks();
+  if (state.notes) document.getElementById('notes-area').value = state.notes;
+  if (state.goals) {
+    ['goal1','goal2','goal3'].forEach((id,i) => {
+      document.getElementById(id).value = state.goals[i] || '';
+    });
+  }
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>

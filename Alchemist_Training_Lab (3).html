@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Alchemist — Training Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060b14; --surface: #0a1220; --surface2: #0f1a2e; --surface3: #162238;
+  --border: #1e3050; --border2: #2a4570;
+  --blue: #2d7dd2; --blue2: #4a9ee8; --blue3: #6bb8ff;
+  --cyan: #00d4ff; --green: #00e676; --amber: #ffab00; --red: #ff5252;
+  --text: #e8f4ff; --text2: #8ab0d0; --text3: #4a6a8a;
+  --mono: 'Share Tech Mono', monospace; --sans: 'Syne', sans-serif;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.tab-bar { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; }
+.tab { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 14px 20px; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab:hover { color: var(--text2); }
+.tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.lab-header { padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); }
+.lab-title h1 { font-family: var(--sans); font-size: 18px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); }
+.lab-title .sub { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.1em; margin-top: 2px; }
+.lab-date { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.08em; }
+
+.sync-status { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 3px; border: 1px solid var(--border2); }
+.sync-ok { color: var(--green); border-color: rgba(0,230,118,0.3); }
+.sync-err { color: var(--red); border-color: rgba(255,82,82,0.3); }
+.sync-wait { color: var(--amber); border-color: rgba(255,171,0,0.3); }
+
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid var(--border); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
+.panel { padding: 18px 22px; border-right: 1px solid var(--border); }
+.panel:last-child { border-right: none; }
+
+.panel-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--cyan); margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+.panel-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 5px var(--cyan); flex-shrink: 0; }
+
+.water-cups { display: flex; gap: 4px; margin-bottom: 10px; }
+.water-cup { width: 20px; height: 28px; border: 1.5px solid var(--border2); border-radius: 2px 2px 4px 4px; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.2s; }
+.water-cup:hover { border-color: var(--cyan); }
+.water-cup.filled { border-color: var(--cyan); }
+.water-fill { position: absolute; bottom: 0; left: 0; right: 0; background: var(--cyan); opacity: 0.7; height: 0%; transition: height 0.3s; }
+.water-cup.filled .water-fill { height: 100%; }
+.water-big { font-family: var(--mono); font-size: 26px; color: var(--cyan); line-height: 1; }
+.water-sub { font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 2px; }
+.bar-wrap { height: 3px; background: var(--surface3); border-radius: 2px; overflow: hidden; margin: 8px 0 4px; }
+.bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+.blue-fill { background: var(--blue2); }
+.cyan-fill { background: var(--cyan); }
+.green-fill { background: var(--green); }
+.amber-fill { background: var(--amber); }
+
+.btn { font-family: var(--mono); font-size: 10px; padding: 6px 12px; border-radius: 3px; cursor: pointer; letter-spacing: 0.06em; border: 1px solid var(--border2); background: var(--surface2); color: var(--text2); transition: all 0.15s; }
+.btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.btn-cyan { border-color: var(--cyan); color: var(--cyan); background: rgba(0,212,255,0.08); }
+.btn-cyan:hover { background: rgba(0,212,255,0.18); }
+.btn-green { border-color: var(--green); color: var(--green); background: rgba(0,230,118,0.08); }
+.btn-full { width: 100%; text-align: center; margin-top: 6px; padding: 9px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.goal-list { list-style: none; margin-bottom: 10px; }
+.goal-item { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+.goal-item:last-child { border-bottom: none; }
+.goal-check { width: 15px; height: 15px; border: 1.5px solid var(--border2); border-radius: 2px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.goal-item.done .goal-check { background: var(--green); border-color: var(--green); }
+.goal-item.done .goal-check::after { content: ''; width: 8px; height: 5px; border-left: 2px solid #000; border-bottom: 2px solid #000; transform: rotate(-45deg) translateY(-1px); display: block; }
+.goal-text { font-size: 12px; color: var(--text2); flex: 1; }
+.goal-item.done .goal-text { text-decoration: line-through; color: var(--text3); }
+.goal-tag { font-family: var(--mono); font-size: 8px; padding: 2px 5px; border-radius: 2px; letter-spacing: 0.06em; }
+.tag-gym { background: rgba(45,125,210,0.2); color: var(--blue3); border: 1px solid rgba(45,125,210,0.3); }
+.tag-body { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+.tag-rest { background: rgba(255,171,0,0.15); color: var(--amber); border: 1px solid rgba(255,171,0,0.2); }
+
+.target-item { margin-bottom: 12px; }
+.target-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.target-name { font-size: 11px; color: var(--text2); }
+.target-val { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+.target-val span { color: var(--blue3); }
+
+.lifts-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.lift-row { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 6px; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; padding: 8px 10px; }
+.lift-name-label { font-family: var(--mono); font-size: 10px; color: var(--text2); letter-spacing: 0.06em; }
+.lift-field { width: 54px; background: var(--surface3); border: 1px solid var(--border); color: var(--blue3); font-family: var(--mono); font-size: 13px; padding: 4px 6px; border-radius: 3px; outline: none; text-align: center; transition: border-color 0.2s; }
+.lift-field:focus { border-color: var(--cyan); color: var(--cyan); }
+.lift-field::placeholder { color: var(--text3); font-size: 10px; }
+.lift-unit-label { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+.lift-delete { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 12px; padding: 0 4px; transition: color 0.15s; }
+.lift-delete:hover { color: var(--red); }
+
+.add-lift-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.add-lift-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: var(--sans); font-size: 11px; padding: 7px 10px; border-radius: 3px; outline: none; transition: border-color 0.2s; }
+.add-lift-input:focus { border-color: var(--cyan); }
+.add-lift-input::placeholder { color: var(--text3); }
+
+.session-log { max-height: 300px; overflow-y: auto; }
+.session-log::-webkit-scrollbar { width: 3px; }
+.session-log::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.log-entry { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.log-entry:last-child { border-bottom: none; }
+.log-meta { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.log-date { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.06em; }
+.log-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.log-pill { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; background: var(--surface3); border: 1px solid var(--border2); color: var(--text2); }
+.log-pill .val { color: var(--blue3); }
+.empty-msg { font-family: var(--mono); font-size: 10px; color: var(--text3); text-align: center; padding: 20px 0; letter-spacing: 0.06em; }
+
+.counter-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.counter-btn { width: 28px; height: 28px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); font-size: 16px; border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.counter-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.counter-val { font-family: var(--mono); font-size: 28px; color: var(--green); min-width: 60px; text-align: center; }
+.btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.bw-input { width: 80px; background: var(--surface2); border: 1px solid var(--border); color: var(--blue3); font-family: var(--mono); font-size: 20px; padding: 5px 8px; border-radius: 4px; outline: none; text-align: center; transition: border-color 0.2s; }
+.bw-input:focus { border-color: var(--cyan); }
+.bw-input::placeholder { color: var(--text3); font-size: 13px; }
+
+.streak-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.streak-row:last-child { border-bottom: none; }
+.streak-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.08em; }
+.streak-val { font-family: var(--mono); font-size: 14px; color: var(--amber); }
+
+.week-log-list { padding: 16px 24px; }
+.week-entry { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+.week-entry-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); }
+.week-entry-header:hover { background: var(--surface3); }
+.week-title { font-family: var(--mono); font-size: 11px; color: var(--cyan); letter-spacing: 0.1em; }
+.week-badges { display: flex; gap: 6px; }
+.week-badge { font-family: var(--mono); font-size: 9px; padding: 2px 8px; border-radius: 3px; }
+.badge-hit { background: rgba(0,230,118,0.15); color: var(--green); border: 1px solid rgba(0,230,118,0.3); }
+.badge-miss { background: rgba(255,82,82,0.15); color: var(--red); border: 1px solid rgba(255,82,82,0.3); }
+.badge-partial { background: rgba(255,171,0,0.15); color: var(--amber); border: 1px solid rgba(255,171,0,0.3); }
+.week-entry-body { padding: 12px 16px; display: none; }
+.week-entry-body.open { display: block; }
+.week-stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
+.week-stat { background: var(--surface3); border-radius: 4px; padding: 10px; text-align: center; }
+.week-stat-val { font-family: var(--mono); font-size: 18px; color: var(--blue3); line-height: 1; }
+.week-stat-label { font-family: var(--mono); font-size: 8px; color: var(--text3); margin-top: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.form-row { display: flex; gap: 8px; align-items: center; }
+.form-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: var(--sans); font-size: 11px; padding: 6px 10px; border-radius: 3px; outline: none; transition: border-color 0.2s; }
+.form-input:focus { border-color: var(--cyan); }
+.form-input::placeholder { color: var(--text3); }
+.form-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: var(--mono); font-size: 10px; padding: 6px 8px; border-radius: 3px; outline: none; cursor: pointer; }
+
+.save-bar { padding: 8px 28px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
+.footer-quote { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: 0.04em; font-style: italic; }
+.save-indicator { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; opacity: 0; transition: opacity 0.3s; }
+.save-indicator.show { opacity: 1; }
+.save-ok { color: var(--green); }
+.save-err { color: var(--red); }
+
+input[type=number]::-webkit-inner-spin-button { opacity: 0.3; }
+</style>
+</head>
+<body>
+
+<div class="lab-header">
+  <div class="lab-title">
+    <h1>⬡ Training Lab</h1>
+    <div class="sub">// The Alchemist · Performance System</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="sync-status sync-wait" id="sync-status">// CONNECTING...</div>
+    <div class="lab-date" id="lab-date"></div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('today')">Today</div>
+  <div class="tab" onclick="switchTab('lifts');renderLiftsGrid()">Lift Logger</div>
+  <div class="tab" onclick="switchTab('weekly');loadWeeklyLog()">Weekly Log</div>
+</div>
+
+<!-- TODAY -->
+<div class="tab-content active" id="tab-today">
+  <div class="grid-3">
+    <div class="panel">
+      <div class="panel-label">Water Intake</div>
+      <div class="water-cups" id="water-cups"></div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;">
+        <span class="water-big" id="water-amount">0</span>
+        <span class="water-sub">/ 8 glasses today</span>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill cyan-fill" id="water-bar" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-family:var(--mono);font-size:8px;color:var(--text3)">0</span>
+        <span style="font-family:var(--mono);font-size:8px;color:var(--text3)">8 = 2L</span>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn" onclick="addWater(1)">+ glass</button>
+        <button class="btn" onclick="addWater(-1)">−</button>
+        <button class="btn btn-green" onclick="logWater()">Log to sheet ✓</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Today's Goals</div>
+      <ul class="goal-list" id="goal-list"></ul>
+      <div class="form-row" style="margin-top:8px;">
+        <input type="text" class="form-input" style="flex:1" id="goal-input" placeholder="Add goal..." onkeydown="if(event.key==='Enter')addGoal()">
+        <select class="form-select" id="goal-tag">
+          <option value="gym">GYM</option>
+          <option value="body">BODY</option>
+          <option value="rest">REST</option>
+        </select>
+        <button class="btn btn-cyan" onclick="addGoal()">+</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Weekly Targets</div>
+      <div id="targets-list"></div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:0.1em;margin-bottom:8px;">EDIT TARGETS</div>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="target-inputs"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="border-bottom:1px solid var(--border);">
+    <div class="panel">
+      <div class="panel-label">Push-ups Today</div>
+      <div class="counter-row">
+        <button class="counter-btn" onclick="changePushups(-10)">−</button>
+        <div class="counter-val" id="pushup-count">0</div>
+        <button class="counter-btn" onclick="changePushups(10)">+</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="changePushups(1)">+1</button>
+        <button class="btn" onclick="changePushups(5)">+5</button>
+        <button class="btn" onclick="changePushups(25)">+25</button>
+        <button class="btn btn-green" onclick="logPushupDay()">Log day ✓</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Body Weight</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <input type="number" class="bw-input" id="bodyweight" placeholder="75.0" step="0.1" min="0">
+        <span class="water-sub">kg</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:8px;" id="bw-last"></div>
+      <button class="btn btn-green btn-full" onclick="logBodyweight()">Log weight to sheet ✓</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">Training Streak</div>
+      <div>
+        <div class="streak-row"><span class="streak-label">CURRENT STREAK</span><span class="streak-val" id="streak-current">0 days</span></div>
+        <div class="streak-row"><span class="streak-label">BEST STREAK</span><span class="streak-val" id="streak-best" style="color:var(--green)">0 days</span></div>
+        <div class="streak-row"><span class="streak-label">THIS WEEK</span><span class="streak-val" id="streak-week" style="color:var(--blue3)">0 sessions</span></div>
+      </div>
+      <button class="btn btn-full" style="margin-top:10px;" onclick="markTrainingDay()">+ Mark training day</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIFT LOGGER -->
+<div class="tab-content" id="tab-lifts">
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-label">Configure & Log Lifts</div>
+      <div class="lifts-grid" id="lifts-grid"></div>
+      <div class="add-lift-row">
+        <input type="text" class="add-lift-input" id="new-lift-name" placeholder="Add new exercise (e.g. Shoulder Press)..." onkeydown="if(event.key==='Enter')addCustomLift()">
+        <button class="btn btn-cyan" onclick="addCustomLift()">+ Add</button>
+      </div>
+      <button class="btn btn-cyan btn-full" style="margin-top:12px;" onclick="logGymSession()">⬡ Log Session → Google Sheet</button>
+    </div>
+    <div class="panel">
+      <div class="panel-label">Session History — from Google Sheet</div>
+      <button class="btn btn-cyan" style="margin-bottom:12px;" onclick="loadSessions()">↺ Refresh from sheet</button>
+      <div class="session-log" id="session-log"><div class="empty-msg">// Click refresh to load sessions</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WEEKLY LOG -->
+<div class="tab-content" id="tab-weekly">
+  <div style="padding:16px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;">WEEKLY RECORDS — Saved to Google Sheet</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="loadWeeklyLog()">↺ Refresh</button>
+      <button class="btn btn-cyan" onclick="saveCurrentWeek()">Save This Week →</button>
+    </div>
+  </div>
+  <div class="week-log-list" id="week-log-list">
+    <div class="empty-msg" style="padding:32px 0;">// Click Refresh to load weekly records</div>
+  </div>
+</div>
+
+<div class="save-bar">
+  <div class="footer-quote">الاعتبار بكمال النهاية لا بنقص البداية — Ibn Taymiyyah rahimahullah</div>
+  <div class="save-indicator" id="save-indicator"></div>
+</div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwUiZYGOYMby8QZbGM0bpFUWebtxLK2Y5XakVLs17xQ1X31pzuwPbUe07gi_QgZfqoZpg/exec';
+
+let S = JSON.parse(localStorage.getItem('alch-lab-v3') || '{}');
+if (!S.water) S.water = 0;
+if (!S.goals) S.goals = [];
+if (!S.pushups) S.pushups = 0;
+if (!S.streak) S.streak = { current:0, best:0, lastDate:null, weekSessions:0 };
+if (!S.weeklyTargets) S.weeklyTargets = { gym:0, pushupDays:0, waterDays:0, totalPushups:0 };
+if (!S.targets) S.targets = [
+  {label:'Gym sessions', key:'gym', goal:2, color:'blue-fill'},
+  {label:'Push-up days', key:'pushupDays', goal:5, color:'green-fill'},
+  {label:'Water target days', key:'waterDays', goal:7, color:'cyan-fill'},
+  {label:'Total push-ups', key:'totalPushups', goal:200, color:'amber-fill'}
+];
+if (!S.lifts) S.lifts = [{name:'Bench Press'},{name:'Squat'},{name:'Deadlift'},{name:'Overhead Press'}];
+
+function saveLocal() { localStorage.setItem('alch-lab-v3', JSON.stringify(S)); }
+
+function today() { return new Date().toDateString(); }
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+function getWeekLabel() {
+  const now = new Date();
+  const mon = new Date(now); mon.setDate(now.getDate()-now.getDay()+1);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  const f = d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  return `${f(mon)} — ${f(sun)}`;
+}
+
+document.getElementById('lab-date').textContent = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+
+// SYNC TO SHEET — GET request with encoded data
+async function syncToSheet(data) {
+  const ind = document.getElementById('save-indicator');
+  const status = document.getElementById('sync-status');
+  ind.textContent = '// SYNCING...';
+  ind.className = 'save-indicator show save-ok';
+  try {
+    const encoded = encodeURIComponent(JSON.stringify(data));
+    const url = SHEET_URL + '?action=log&data=' + encoded;
+    await fetch(url, { method: 'GET', mode: 'no-cors' });
+    ind.textContent = '// SAVED TO SHEET ✓';
+    ind.className = 'save-indicator show save-ok';
+    status.textContent = '// CONNECTED';
+    status.className = 'sync-status sync-ok';
+    setTimeout(function() { ind.classList.remove('show'); }, 3000);
+    return true;
+  } catch(err) {
+    ind.textContent = '// SYNC ERROR';
+    ind.className = 'save-indicator show save-err';
+    status.textContent = '// OFFLINE';
+    status.className = 'sync-status sync-err';
+    setTimeout(function() { ind.classList.remove('show'); }, 3000);
+    return false;
+  }
+}
+
+async function loadFromSheet(action) {
+  try {
+    const res = await fetch(`${SHEET_URL}?action=${action}`);
+    return await res.json();
+  } catch(err) {
+    return null;
+  }
+}
+
+// TABS
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['today','lifts','weekly'][i]===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// WATER
+function buildWaterCups() {
+  const wrap = document.getElementById('water-cups');
+  wrap.innerHTML = '';
+  for(let i=0;i<8;i++){
+    const c = document.createElement('div');
+    c.className = 'water-cup'+(i<S.water?' filled':'');
+    c.innerHTML = '<div class="water-fill"></div>';
+    c.onclick = ()=>{ S.water=i<S.water?i:i+1; saveLocal(); renderWater(); };
+    wrap.appendChild(c);
+  }
+}
+function renderWater() {
+  document.getElementById('water-amount').textContent = S.water;
+  document.getElementById('water-bar').style.width = Math.min(S.water/8*100,100)+'%';
+  buildWaterCups();
+}
+function addWater(n) { S.water=Math.max(0,Math.min(8,S.water+n)); saveLocal(); renderWater(); }
+function logWater() {
+  if(S.water>=8 && S._waterDay!==today()) {
+    S._waterDay=today();
+    S.weeklyTargets.waterDays=(S.weeklyTargets.waterDays||0)+1;
+    saveLocal(); renderTargets();
+  }
+  syncToSheet({ type:'water', date:today(), glasses:S.water });
+}
+
+// GOALS
+function renderGoals() {
+  const list = document.getElementById('goal-list');
+  if(!S.goals.length){ list.innerHTML='<li style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:8px 0;">// No goals set</li>'; return; }
+  list.innerHTML = S.goals.map((g,i)=>`
+    <li class="goal-item${g.done?' done':''}" onclick="toggleGoal(${i})">
+      <div class="goal-check"></div>
+      <span class="goal-text">${g.text}</span>
+      <span class="goal-tag tag-${g.tag}">${g.tag.toUpperCase()}</span>
+    </li>`).join('');
+}
+function toggleGoal(i) { S.goals[i].done=!S.goals[i].done; saveLocal(); renderGoals(); }
+function addGoal() {
+  const inp=document.getElementById('goal-input');
+  const text=inp.value.trim(); if(!text)return;
+  S.goals.push({text,tag:document.getElementById('goal-tag').value,done:false});
+  inp.value=''; saveLocal(); renderGoals();
+}
+
+// TARGETS
+function renderTargets() {
+  document.getElementById('targets-list').innerHTML = S.targets.map(t=>{
+    const v=S.weeklyTargets[t.key]||0;
+    const pct=Math.min(v/t.goal*100,100);
+    return `<div class="target-item">
+      <div class="target-header">
+        <span class="target-name">${t.label}</span>
+        <span class="target-val"><span>${v}</span> / ${t.goal}</span>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill ${t.color}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('target-inputs').innerHTML = S.targets.map((t,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--text3);min-width:110px;">${t.label}:</span>
+      <input type="number" value="${t.goal}" min="1" style="width:54px;background:var(--surface2);border:1px solid var(--border);color:var(--blue3);font-family:var(--mono);font-size:11px;padding:3px 6px;border-radius:3px;outline:none;"
+        oninput="S.targets[${i}].goal=parseInt(this.value)||1;saveLocal();renderTargets();">
+    </div>`).join('');
+}
+
+// LIFTS
+function renderLiftsGrid() {
+  document.getElementById('lifts-grid').innerHTML = S.lifts.map((l,i)=>`
+    <div class="lift-row">
+      <span class="lift-name-label">${l.name}</span>
+      <input type="number" class="lift-field" id="lift-kg-${i}" placeholder="kg" min="0">
+      <span class="lift-unit-label">kg</span>
+      <input type="number" class="lift-field" id="lift-reps-${i}" placeholder="reps" min="0">
+      <span class="lift-unit-label">×</span>
+      <input type="number" class="lift-field" id="lift-sets-${i}" placeholder="sets" min="0">
+      <span class="lift-unit-label">s</span>
+      <button class="lift-delete" onclick="deleteLift(${i})">✕</button>
+    </div>`).join('');
+}
+function deleteLift(i) {
+  if(confirm(`Remove "${S.lifts[i].name}"?`)){ S.lifts.splice(i,1); saveLocal(); renderLiftsGrid(); }
+}
+function addCustomLift() {
+  const inp=document.getElementById('new-lift-name');
+  const name=inp.value.trim(); if(!name)return;
+  S.lifts.push({name}); inp.value=''; saveLocal(); renderLiftsGrid();
+}
+
+// GYM SESSION
+async function logGymSession() {
+  const allLifts = document.querySelectorAll('.lift-row');
+  const lifts = [];
+  allLifts.forEach((row, i) => {
+    const kg = row.querySelector(`#lift-kg-${i}`)?.value || row.querySelectorAll('.lift-field')[0]?.value || '';
+    const reps = row.querySelector(`#lift-reps-${i}`)?.value || row.querySelectorAll('.lift-field')[1]?.value || '';
+    const sets = row.querySelector(`#lift-sets-${i}`)?.value || row.querySelectorAll('.lift-field')[2]?.value || '';
+    const name = S.lifts[i]?.name || 'Exercise';
+    if(kg || reps) lifts.push({name, kg, reps, sets});
+  });
+
+  if(!lifts.length){ alert('Enter at least one lift before logging.'); return; }
+
+  S.weeklyTargets.gym=(S.weeklyTargets.gym||0)+1;
+  saveLocal(); renderTargets(); markTrainingDay();
+
+  await syncToSheet({ type:'session', date:today(), week:getWeekLabel(), lifts });
+
+  S.lifts.forEach((_,i)=>{
+    const kg=document.getElementById(`lift-kg-${i}`);
+    const reps=document.getElementById(`lift-reps-${i}`);
+    const sets=document.getElementById(`lift-sets-${i}`);
+    if(kg)kg.value=''; if(reps)reps.value=''; if(sets)sets.value='';
+  });
+}
+
+async function loadSessions() {
+  const log = document.getElementById('session-log');
+  log.innerHTML = '<div class="empty-msg">// Loading from Google Sheet...</div>';
+  const data = await loadFromSheet('getSessions');
+  if(!data || data.length<=1){ log.innerHTML='<div class="empty-msg">// No sessions found in sheet</div>'; return; }
+  const rows = data.slice(1).reverse();
+  log.innerHTML = rows.map(r=>`
+    <div class="log-entry">
+      <div class="log-meta">
+        <span class="log-date">${r[0]} — Week: ${r[1]}</span>
+      </div>
+      <div class="log-pills">
+        <span class="log-pill">${r[2]} <span class="val">${r[3]||'—'}kg</span> × ${r[4]||'—'} ${r[5]?`(${r[5]}s)`:''}</span>
+      </div>
+    </div>`).join('');
+}
+
+// PUSHUPS
+function changePushups(n) { S.pushups=Math.max(0,S.pushups+n); document.getElementById('pushup-count').textContent=S.pushups; saveLocal(); }
+function logPushupDay() {
+  S.weeklyTargets.pushupDays=(S.weeklyTargets.pushupDays||0)+1;
+  S.weeklyTargets.totalPushups=(S.weeklyTargets.totalPushups||0)+S.pushups;
+  const count = S.pushups;
+  S.pushups=0;
+  document.getElementById('pushup-count').textContent=0;
+  saveLocal(); renderTargets(); markTrainingDay();
+  syncToSheet({ type:'pushup', date:today(), count });
+}
+
+// BODYWEIGHT
+function logBodyweight() {
+  const val=document.getElementById('bodyweight').value;
+  if(!val)return;
+  document.getElementById('bw-last').textContent=`// Last: ${val}kg — ${fmtDate(today())}`;
+  syncToSheet({ type:'bodyweight', date:today(), weight:parseFloat(val) });
+}
+
+// STREAK
+function markTrainingDay() {
+  const t=today();
+  if(S.streak.lastDate===t)return;
+  const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+  S.streak.current = S.streak.lastDate===yesterday.toDateString() ? S.streak.current+1 : 1;
+  if(S.streak.current>S.streak.best) S.streak.best=S.streak.current;
+  S.streak.lastDate=t;
+  S.streak.weekSessions=(S.streak.weekSessions||0)+1;
+  saveLocal(); renderStreak();
+}
+function renderStreak() {
+  document.getElementById('streak-current').textContent=S.streak.current+' days';
+  document.getElementById('streak-best').textContent=S.streak.best+' days';
+  document.getElementById('streak-week').textContent=(S.streak.weekSessions||0)+' sessions';
+}
+
+// WEEKLY LOG
+async function saveCurrentWeek() {
+  const wt = S.weeklyTargets;
+  await syncToSheet({
+    type:'weekly', week:getWeekLabel(), date:today(),
+    gym:wt.gym||0, pushupDays:wt.pushupDays||0,
+    totalPushups:wt.totalPushups||0, waterDays:wt.waterDays||0
+  });
+  if(confirm('Week saved to sheet! Reset weekly counters for the new week?')) {
+    S.weeklyTargets={gym:0,pushupDays:0,waterDays:0,totalPushups:0};
+    S.streak.weekSessions=0;
+    S._waterDay=null;
+    saveLocal(); renderTargets(); renderStreak();
+  }
+  loadWeeklyLog();
+}
+
+async function loadWeeklyLog() {
+  const list = document.getElementById('week-log-list');
+  list.innerHTML = '<div class="empty-msg" style="padding:32px 0;">// Loading from Google Sheet...</div>';
+  const data = await loadFromSheet('getWeeklyLog');
+  if(!data || data.length<=1){ list.innerHTML='<div class="empty-msg" style="padding:32px 0;">// No weekly records yet</div>'; return; }
+
+  const rows = data.slice(1).reverse();
+  list.innerHTML = rows.map((r,wi)=>{
+    const [week,gym,pushupDays,totalPushups,waterDays,date] = r;
+    const targets = [
+      {label:'Gym sessions',achieved:gym,goal:S.targets[0].goal},
+      {label:'Push-up days',achieved:pushupDays,goal:S.targets[1].goal},
+      {label:'Total push-ups',achieved:totalPushups,goal:S.targets[3].goal},
+      {label:'Water days',achieved:waterDays,goal:S.targets[2].goal}
+    ];
+    const hitAll = targets.every(t=>t.achieved>=t.goal);
+    const hitNone = targets.every(t=>t.achieved==0);
+    const badge = hitAll?'<span class="week-badge badge-hit">ALL TARGETS HIT</span>':hitNone?'<span class="week-badge badge-miss">MISSED</span>':'<span class="week-badge badge-partial">PARTIAL</span>';
+
+    return `<div class="week-entry">
+      <div class="week-entry-header" onclick="document.getElementById('wb-${wi}').classList.toggle('open')">
+        <span class="week-title">${week}</span>
+        <div class="week-badges">${badge}</div>
+      </div>
+      <div class="week-entry-body" id="wb-${wi}">
+        <div class="week-stat-grid">
+          <div class="week-stat"><div class="week-stat-val">${gym}</div><div class="week-stat-label">Gym sessions</div></div>
+          <div class="week-stat"><div class="week-stat-val">${pushupDays}</div><div class="week-stat-label">Push-up days</div></div>
+          <div class="week-stat"><div class="week-stat-val">${totalPushups}</div><div class="week-stat-label">Total push-ups</div></div>
+          <div class="week-stat"><div class="week-stat-val">${waterDays}</div><div class="week-stat-label">Water days</div></div>
+        </div>
+        ${targets.map(t=>{
+          const pct=Math.min(t.achieved/t.goal*100,100);
+          const hit=t.achieved>=t.goal;
+          return `<div class="target-item">
+            <div class="target-header">
+              <span class="target-name" style="font-size:10px;">${t.label}</span>
+              <span class="target-val"><span style="color:${hit?'var(--green)':'var(--blue3)'}">${t.achieved}</span> / ${t.goal} ${hit?'✓':''}</span>
+            </div>
+            <div class="bar-wrap"><div class="bar-fill ${hit?'green-fill':'blue-fill'}" style="width:${pct}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// INIT
+function init() {
+  renderWater(); renderGoals(); renderTargets(); renderStreak();
+  document.getElementById('pushup-count').textContent = S.pushups||0;
+  document.getElementById('sync-status').textContent = '// READY';
+  document.getElementById('sync-status').className = 'sync-status sync-ok';
+}
+
+init();
+</script>
+</body>
+</html>
