@@ -1,0 +1,24 @@
+{
+  "name": "The Alchemist — Training Lab",
+  "short_name": "Training Lab",
+  "description": "Performance tracking system",
+  "start_url": "./training.html",
+  "display": "standalone",
+  "background_color": "#060b14",
+  "theme_color": "#060b14",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "training-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "training-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
