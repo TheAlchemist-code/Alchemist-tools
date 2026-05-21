@@ -104,12 +104,12 @@ const THEMES = {
     navActive: "#1A6B6B",
   },
   weekly: {
-    bg: "#F7F0E3", primary: "#A0522D", primaryL: "#C0703A", primaryD: "#6B3318",
-    accent: "#D4A050", accentL: "#EFC070", text: "#2A1A0E", textLight: "#7A5A40",
-    white: "#FFFAF4", border: "#E0C9A8", checkBg: "#FDF0DC",
-    cardShadow: "rgba(160,82,45,0.08)",
-    headerGrad: "linear-gradient(135deg,#6B3318 0%,#A0522D 100%)",
-    navActive: "#A0522D",
+    bg: "#E8F0F8", primary: "#3A6FA8", primaryL: "#5A8FC8", primaryD: "#1F4570",
+    accent: "#D4A050", accentL: "#EFC070", text: "#0F2540", textLight: "#5A7090",
+    white: "#FFFFFF", border: "#C0D4E8", checkBg: "#DCE8F4",
+    cardShadow: "rgba(58,111,168,0.10)",
+    headerGrad: "linear-gradient(135deg,#1F4570 0%,#3A6FA8 100%)",
+    navActive: "#3A6FA8",
   },
   stats: {
     bg: "#EEF2F8", primary: "#1E3A6E", primaryL: "#2E5090", primaryD: "#0F1F40",
@@ -129,9 +129,9 @@ const QUOTES = {
     { text: "Make use of five before five: your youth before old age, your health before sickness, your wealth before poverty, your free time before being busy, and your life before death.", author: "Ibn Abbas" },
   ],
   weekly: [
+    { text: "The true measure is the perfection of the endings, not the deficiency of the beginnings.", author: "Ibn Taymiyyah" },
     { text: "Patience is of three types: patience in worship, patience from sin, and patience with what Allah decrees.", author: "Ibn Qayyim" },
     { text: "Whoever desires everlasting bliss, let him remain firmly in the threshold of servitude.", author: "Ibn Taymiyyah" },
-    { text: "The more the servant loves his Master, the less he loves other than Him.", author: "Ibn Qayyim" },
   ],
   stats: [
     { text: "Knowledge is not what is memorized, but what benefits.", author: "Ibn Taymiyyah" },
@@ -204,6 +204,8 @@ function App() {
   const [newEmoji, setNewEmoji] = useState("⭐");
   const [taskInputs, setTaskInputs] = useState({});
   const [addingDay, setAddingDay] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [expandedDay, setExpandedDay] = useState(dayKey(today));
 
   useEffect(()=>{
     try {
@@ -312,15 +314,50 @@ function App() {
       <div className="alc-scroll" style={{flex:1,overflowY:"auto",paddingBottom:isDesktop?20:80}}>
 
         {/* TODAY */}
-        {tab==="today" && (
+        {tab==="today" && (() => {
+          const selProg = dayProgress(selectedDate);
+          const selKey = dayKey(selectedDate);
+          const isViewingToday = selKey === dayKey(today);
+          const daysBack = Math.round((today - selectedDate) / 86400000);
+          const canGoBack = daysBack < 6;
+          const canGoForward = !isViewingToday;
+          return (
           <div style={{padding:contentPad,maxWidth:contentMaxW,margin:"0 auto",width:"100%"}}>
+
+            {/* DATE STEPPER */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+              marginBottom:isDesktop?14:10,background:C.white,borderRadius:10,padding:isDesktop?"8px 12px":"6px 8px",
+              boxShadow:`0 1px 4px ${C.cardShadow}`}}>
+              <button onClick={()=>{if(canGoBack){const d=new Date(selectedDate);d.setDate(d.getDate()-1);setSelectedDate(d);}}}
+                disabled={!canGoBack}
+                style={{background:canGoBack?C.primary:C.border,color:"#fff",border:"none",borderRadius:7,
+                  padding:isDesktop?"7px 14px":"5px 10px",cursor:canGoBack?"pointer":"not-allowed",
+                  fontSize:isDesktop?16:14,opacity:canGoBack?1:0.4}}>‹</button>
+              <div style={{textAlign:"center",flex:1}}>
+                <div style={{fontSize:isDesktop?14:12,fontWeight:"bold",color:C.primaryD}}>
+                  {isViewingToday?"Today":WDAYS[(selectedDate.getDay()+6)%7]+", "+selectedDate.getDate()+" "+MONTHS_S[selectedDate.getMonth()]}
+                </div>
+                {!isViewingToday && (
+                  <div style={{fontSize:isDesktop?11:10,color:C.textLight,marginTop:1}}>
+                    {daysBack===1?"Yesterday":daysBack+" days ago"}
+                    <span onClick={()=>setSelectedDate(today)} style={{marginLeft:8,color:C.primary,cursor:"pointer",textDecoration:"underline"}}>back to today</span>
+                  </div>
+                )}
+              </div>
+              <button onClick={()=>{if(canGoForward){const d=new Date(selectedDate);d.setDate(d.getDate()+1);setSelectedDate(d);}}}
+                disabled={!canGoForward}
+                style={{background:canGoForward?C.primary:C.border,color:"#fff",border:"none",borderRadius:7,
+                  padding:isDesktop?"7px 14px":"5px 10px",cursor:canGoForward?"pointer":"not-allowed",
+                  fontSize:isDesktop?16:14,opacity:canGoForward?1:0.4}}>›</button>
+            </div>
+
             <div style={{display:"flex",alignItems:"center",gap:isDesktop?18:14,marginBottom:isDesktop?20:16,background:C.white,
               borderRadius:14,padding:isDesktop?"16px 24px":"12px 16px",boxShadow:`0 2px 12px ${C.cardShadow}`}}>
-              <Ring pct={todayProg.pct} size={isDesktop?72:60} stroke={isDesktop?8:7} color={C.primary} bg={C.checkBg}/>
+              <Ring pct={selProg.pct} size={isDesktop?72:60} stroke={isDesktop?8:7} color={C.primary} bg={C.checkBg}/>
               <div>
-                <div style={{fontSize:isDesktop?20:16,fontWeight:"bold",color:C.primaryD}}>{todayProg.done} / {todayProg.total} done</div>
+                <div style={{fontSize:isDesktop?20:16,fontWeight:"bold",color:C.primaryD}}>{selProg.done} / {selProg.total} done</div>
                 <div style={{fontSize:isDesktop?13:11,color:C.textLight,marginTop:2}}>
-                  {todayProg.pct===100?"🌟 Perfect day, masha'Allah!":todayProg.pct>=70?"Strong effort today":"Keep pushing forward"}
+                  {selProg.pct===100?"🌟 Perfect day, masha'Allah!":selProg.pct>=70?"Strong effort":"Keep pushing forward"}
                 </div>
               </div>
             </div>
@@ -328,10 +365,10 @@ function App() {
             {/* Desktop: 2-column grid for habits */}
             <div style={{display:"grid",gridTemplateColumns:isDesktop?"1fr 1fr":"1fr",gap:isDesktop?10:7}}>
               {habits.map(h=>{
-                const done=checked[dayKey(today)]?.[h.id]||false;
+                const done=checked[selKey]?.[h.id]||false;
                 const s=streak(h.id);
                 return (
-                  <div key={h.id} onClick={()=>toggleHabit(h.id,today)} style={{
+                  <div key={h.id} onClick={()=>toggleHabit(h.id,selectedDate)} style={{
                     display:"flex",alignItems:"center",gap:isDesktop?12:10,
                     background:done?`${C.primary}12`:C.white,
                     border:`1.5px solid ${done?C.primary:C.border}`,
@@ -384,7 +421,8 @@ function App() {
                 padding:isDesktop?"12px 32px":"11px",fontSize:isDesktop?13:12,cursor:"pointer",fontFamily:"inherit"}}>+ Add New Habit</button>
             )}
           </div>
-        )}
+          );
+        })()}
 
         {/* WEEKLY */}
         {tab==="weekly" && (
@@ -399,57 +437,79 @@ function App() {
                 style={{background:C.primary,color:"#fff",border:"none",borderRadius:8,padding:isDesktop?"8px 16px":"6px 12px",cursor:"pointer",fontSize:isDesktop?18:16}}>›</button>
             </div>
 
-            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:isDesktop?8:4}}>
+            <div style={{display:"grid",gridTemplateColumns:isDesktop?"repeat(7,1fr)":"1fr",gap:isDesktop?8:6}}>
               {wDates.map((d,i)=>{
                 const k=dayKey(d);
                 const isToday=k===dayKey(today);
                 const tasks=weekTasks[k]||[];
                 const tp=taskProg(k);
                 const isAdding=addingDay===k;
+                const isExpanded=isDesktop||expandedDay===k;
                 return (
                   <div key={i} style={{background:isToday?`${C.primary}10`:C.white,
                     border:`1.5px solid ${isToday?C.primary:C.border}`,
-                    borderRadius:isDesktop?12:10,display:"flex",flexDirection:"column",minHeight:isDesktop?260:180,overflow:"hidden"}}>
-                    <div style={{background:isToday?C.primary:C.primaryD,padding:isDesktop?"8px 6px":"5px 3px",textAlign:"center"}}>
-                      <div style={{fontSize:isDesktop?11:8,color:isToday?C.accentL:"rgba(255,255,255,0.65)",
-                        textTransform:"uppercase",letterSpacing:0.3}}>{WDAYS[i]}</div>
-                      <div style={{fontSize:isDesktop?16:12,fontWeight:"bold",color:"#fff"}}>{d.getDate()}</div>
-                      {tp&&<div style={{fontSize:isDesktop?10:7,color:isToday?C.accentL:"rgba(255,255,255,0.55)"}}>{tp.pct}%</div>}
+                    borderRadius:isDesktop?12:10,display:"flex",flexDirection:"column",
+                    minHeight:isDesktop?260:"auto",overflow:"hidden"}}>
+                    <div onClick={()=>!isDesktop&&setExpandedDay(isExpanded?null:k)}
+                      style={{background:isToday?C.primary:C.primaryD,
+                      padding:isDesktop?"8px 6px":"10px 14px",
+                      textAlign:isDesktop?"center":"left",
+                      cursor:isDesktop?"default":"pointer",
+                      display:"flex",alignItems:"center",justifyContent:isDesktop?"center":"space-between",
+                      gap:isDesktop?0:8,flexDirection:isDesktop?"column":"row"}}>
+                      <div style={{display:"flex",alignItems:"baseline",gap:isDesktop?0:8,
+                        flexDirection:isDesktop?"column":"row"}}>
+                        <div style={{fontSize:isDesktop?11:13,color:isToday?C.accentL:"rgba(255,255,255,0.75)",
+                          textTransform:"uppercase",letterSpacing:0.5,fontWeight:isDesktop?"normal":"bold"}}>{WDAYS[i]}</div>
+                        <div style={{fontSize:isDesktop?16:18,fontWeight:"bold",color:"#fff"}}>{d.getDate()}</div>
+                        {!isDesktop&&isToday&&<span style={{fontSize:10,color:C.accentL,marginLeft:4}}>TODAY</span>}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        {tp&&<div style={{fontSize:isDesktop?10:12,color:isToday?C.accentL:"rgba(255,255,255,0.7)",fontWeight:"600"}}>{tp.done}/{tp.total} · {tp.pct}%</div>}
+                        {!isDesktop&&<span style={{color:"#fff",fontSize:14,transition:"transform 0.2s",display:"inline-block",transform:isExpanded?"rotate(180deg)":"rotate(0deg)"}}>▾</span>}
+                      </div>
                     </div>
-                    <div style={{flex:1,padding:isDesktop?"8px 6px 6px":"4px 3px 3px",display:"flex",flexDirection:"column",gap:isDesktop?4:2}}>
+                    {isExpanded&&(
+                    <div style={{flex:1,padding:isDesktop?"8px 6px 6px":"10px 12px 10px",
+                      display:"flex",flexDirection:"column",gap:isDesktop?4:6}}>
+                      {tasks.length===0&&!isAdding&&(
+                        <div style={{fontSize:isDesktop?11:12,color:C.textLight,fontStyle:"italic",textAlign:"center",padding:isDesktop?"4px":"8px"}}>No tasks yet</div>
+                      )}
                       {tasks.map(t=>(
-                        <div key={t.id} style={{display:"flex",alignItems:"flex-start",gap:isDesktop?4:2}}>
-                          <div onClick={()=>toggleTask(k,t.id)} style={{width:isDesktop?16:11,height:isDesktop?16:11,borderRadius:isDesktop?3:2,flexShrink:0,marginTop:1,
+                        <div key={t.id} style={{display:"flex",alignItems:"flex-start",gap:isDesktop?4:8}}>
+                          <div onClick={()=>toggleTask(k,t.id)} style={{width:isDesktop?16:20,height:isDesktop?16:20,borderRadius:isDesktop?3:4,flexShrink:0,marginTop:1,
                             border:`1.5px solid ${t.done?C.primary:C.border}`,background:t.done?C.primary:"transparent",
                             cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                            {t.done&&<span style={{color:"#fff",fontSize:isDesktop?10:7,lineHeight:1}}>✓</span>}
+                            {t.done&&<span style={{color:"#fff",fontSize:isDesktop?10:13,lineHeight:1}}>✓</span>}
                           </div>
-                          <span style={{fontSize:isDesktop?12:8,lineHeight:1.35,color:t.done?C.primaryL:C.text,
+                          <span style={{fontSize:isDesktop?12:14,lineHeight:1.4,color:t.done?C.primaryL:C.text,
                             textDecoration:t.done?"line-through":"none",flex:1,wordBreak:"break-word"}}>{t.text}</span>
-                          <span onClick={()=>removeTask(k,t.id)} style={{fontSize:isDesktop?12:8,color:C.border,cursor:"pointer",flexShrink:0,paddingLeft:1,
+                          <span onClick={()=>removeTask(k,t.id)} style={{fontSize:isDesktop?12:16,color:C.border,cursor:"pointer",flexShrink:0,paddingLeft:2,
                             opacity:0.6,transition:"opacity 0.2s"}}
                             onMouseEnter={e=>e.target.style.opacity=1} onMouseLeave={e=>e.target.style.opacity=0.6}>×</span>
                         </div>
                       ))}
                       {isAdding?(
-                        <div style={{marginTop:isDesktop?4:2}}>
+                        <div style={{marginTop:isDesktop?4:6}}>
                           <input autoFocus value={taskInputs[k]||""}
+                            type="text" inputMode="text"
                             onChange={e=>setTaskInputs(p=>({...p,[k]:e.target.value}))}
                             onKeyDown={e=>{if(e.key==="Enter")addTask(k);if(e.key==="Escape")setAddingDay(null);}}
-                            placeholder="Task..."
-                            style={{width:"100%",fontSize:isDesktop?12:8,border:`1px solid ${C.primary}`,borderRadius:isDesktop?4:3,
-                              padding:isDesktop?"5px":"3px",background:C.bg,fontFamily:"inherit",boxSizing:"border-box"}}/>
-                          <div style={{display:"flex",gap:isDesktop?4:2,marginTop:isDesktop?4:2}}>
-                            <button onClick={()=>addTask(k)} style={{flex:1,background:C.primary,color:"#fff",border:"none",borderRadius:isDesktop?4:2,fontSize:isDesktop?11:7,padding:isDesktop?"4px":"2px",cursor:"pointer"}}>✓</button>
-                            <button onClick={()=>setAddingDay(null)} style={{flex:1,background:C.bg,color:C.textLight,border:`1px solid ${C.border}`,borderRadius:isDesktop?4:2,fontSize:isDesktop?11:7,padding:isDesktop?"4px":"2px",cursor:"pointer"}}>✕</button>
+                            placeholder="Type task..."
+                            style={{width:"100%",fontSize:isDesktop?12:14,border:`1.5px solid ${C.primary}`,borderRadius:isDesktop?4:6,
+                              padding:isDesktop?"5px":"8px 10px",background:C.bg,fontFamily:"inherit",boxSizing:"border-box"}}/>
+                          <div style={{display:"flex",gap:isDesktop?4:6,marginTop:isDesktop?4:6}}>
+                            <button onClick={()=>addTask(k)} style={{flex:1,background:C.primary,color:"#fff",border:"none",borderRadius:isDesktop?4:6,fontSize:isDesktop?11:13,padding:isDesktop?"4px":"7px",cursor:"pointer",fontFamily:"inherit"}}>✓ Add</button>
+                            <button onClick={()=>setAddingDay(null)} style={{flex:1,background:C.bg,color:C.textLight,border:`1px solid ${C.border}`,borderRadius:isDesktop?4:6,fontSize:isDesktop?11:13,padding:isDesktop?"4px":"7px",cursor:"pointer",fontFamily:"inherit"}}>✕ Cancel</button>
                           </div>
                         </div>
                       ):(
                         <button onClick={()=>setAddingDay(k)} style={{background:"none",border:`1px dashed ${C.border}`,
-                          color:C.textLight,borderRadius:isDesktop?4:3,fontSize:isDesktop?11:8,padding:isDesktop?"5px 4px":"3px 2px",cursor:"pointer",
-                          width:"100%",marginTop:"auto",fontFamily:"inherit"}}>+ add</button>
+                          color:C.textLight,borderRadius:isDesktop?4:6,fontSize:isDesktop?11:13,padding:isDesktop?"5px 4px":"8px 6px",cursor:"pointer",
+                          width:"100%",marginTop:"auto",fontFamily:"inherit"}}>+ add task</button>
                       )}
                     </div>
+                    )}
                     {tp&&(
                       <div style={{height:isDesktop?4:3,background:C.checkBg}}>
                         <div style={{height:"100%",width:`${tp.pct}%`,background:C.primary,transition:"width 0.3s"}}/>
