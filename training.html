@@ -169,8 +169,8 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
   </div>
   <div class="quote-bar"><div class="quote-text" id="quote-text"></div><div class="quote-author" id="quote-author"></div></div>
   <div class="app-scroll">
-    <!-- TODAY -->
-    <div class="tab-content active" id="tab-today">
+    <!-- WORKOUT -->
+    <div class="tab-content active" id="tab-workout">
       <div class="grid-2">
         <div class="panel">
           <div class="panel-label">Today's Goals</div>
@@ -188,6 +188,22 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
             <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:0.1em;margin-bottom:8px;">EDIT TARGETS</div>
             <div style="display:flex;flex-direction:column;gap:6px;" id="target-inputs"></div>
           </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-label">Log Lifts</div>
+          <div class="lifts-grid" id="lifts-grid"></div>
+          <div class="add-lift-row">
+            <input type="text" class="add-lift-input" id="new-lift-name" placeholder="Add exercise..." onkeydown="if(event.key==='Enter')addCustomLift()">
+            <button class="btn btn-accent" onclick="addCustomLift()">+ Add</button>
+          </div>
+          <button class="btn btn-accent btn-full" style="margin-top:14px;" onclick="logGymSession()">&#x2B21; Save Lifts &#10003;</button>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--text3);text-align:center;margin-top:8px;letter-spacing:0.06em;">// Saving lifts auto-marks the training day &mdash; only once per day</div>
+        </div>
+        <div class="panel">
+          <div class="panel-label">Session History</div>
+          <div id="session-log" style="max-height:500px;overflow-y:auto;"></div>
         </div>
       </div>
       <div class="grid-3">
@@ -219,25 +235,6 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
           <div class="streak-row"><span class="streak-label">CURRENT</span><span class="streak-val" id="streak-current">0 days</span></div>
           <div class="streak-row"><span class="streak-label">BEST</span><span class="streak-val" id="streak-best" style="color:var(--green)">0 days</span></div>
           <div class="streak-row"><span class="streak-label">THIS WEEK</span><span class="streak-val" id="streak-week" style="color:var(--accent)">0</span></div>
-          <button class="btn btn-full" style="margin-top:10px;" onclick="markTrainingDay()">+ Mark training day</button>
-        </div>
-      </div>
-    </div>
-    <!-- LIFTS -->
-    <div class="tab-content" id="tab-lifts">
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-label">Configure &amp; Log Lifts</div>
-          <div class="lifts-grid" id="lifts-grid"></div>
-          <div class="add-lift-row">
-            <input type="text" class="add-lift-input" id="new-lift-name" placeholder="Add exercise..." onkeydown="if(event.key==='Enter')addCustomLift()">
-            <button class="btn btn-accent" onclick="addCustomLift()">+ Add</button>
-          </div>
-          <button class="btn btn-accent btn-full" style="margin-top:14px;" onclick="logGymSession()">&#x2B21; Log Session &#10003;</button>
-        </div>
-        <div class="panel">
-          <div class="panel-label">Session History</div>
-          <div id="session-log" style="max-height:500px;overflow-y:auto;"></div>
         </div>
       </div>
     </div>
@@ -275,8 +272,8 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
         </div>
       </div>
     </div>
-    <!-- WEEKLY -->
-    <div class="tab-content" id="tab-weekly">
+    <!-- RECORDS -->
+    <div class="tab-content" id="tab-records">
       <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div style="font-family:var(--mono);font-size:10px;color:var(--text3);">WEEKLY RECORDS</div>
         <button class="btn btn-accent" onclick="saveCurrentWeek()">Save This Week &rarr;</button>
@@ -289,26 +286,23 @@ input[type=number]::-webkit-inner-spin-button{opacity:0.3;}
     <div class="save-indicator" id="save-indicator"></div>
   </div>
   <div class="tab-bar">
-    <div class="tab active" onclick="switchTab('today')"><span class="tab-icon">&#x26A1;</span>Today</div>
-    <div class="tab" onclick="switchTab('lifts')"><span class="tab-icon">&#x1F3CB;&#xFE0F;</span>Lifts</div>
+    <div class="tab active" onclick="switchTab('workout')"><span class="tab-icon">&#x1F3CB;&#xFE0F;</span>Workout</div>
     <div class="tab" onclick="switchTab('stats')"><span class="tab-icon">&#x1F4C8;</span>Stats</div>
-    <div class="tab" onclick="switchTab('weekly')"><span class="tab-icon">&#x1F4CA;</span>Weekly</div>
+    <div class="tab" onclick="switchTab('records')"><span class="tab-icon">&#x1F4CA;</span>Records</div>
   </div>
 </div>
 <script>
 // ========== THEMES ==========
 var THEMES={
-  today:{bg:'#060b14',surface:'#0a1220',surface2:'#0f1a2e',surface3:'#162238',border:'#1e3050',border2:'#2a4570',accent:'#00d4ff',accentBg:'rgba(0,212,255,0.08)',green:'#00e676',amber:'#ffab00',red:'#ff5252',text:'#e8f4ff',text2:'#8ab0d0',text3:'#4a6a8a',chartLine:'#00d4ff',chartFill:'#00d4ff',gridLine:'#1e3050'},
-  lifts:{bg:'#f5f0e8',surface:'#ede7da',surface2:'#e5dece',surface3:'#d8cfc0',border:'#c4b99e',border2:'#a89878',accent:'#8B5E3C',accentBg:'rgba(139,94,60,0.1)',green:'#5a8a3c',amber:'#b8860b',red:'#c0392b',text:'#2a2018',text2:'#5a4a38',text3:'#8a7a68',chartLine:'#8B5E3C',chartFill:'#8B5E3C',gridLine:'#d8cfc0'},
-  stats:{bg:'#1a1a1a',surface:'#222222',surface2:'#2a2a2a',surface3:'#333333',border:'#404040',border2:'#555555',accent:'#e0e0e0',accentBg:'rgba(224,224,224,0.08)',green:'#7dcea0',amber:'#f0b850',red:'#e57373',text:'#f0f0f0',text2:'#b0b0b0',text3:'#707070',chartLine:'#e0e0e0',chartFill:'#e0e0e0',gridLine:'#404040'},
-  weekly:{bg:'#1a0f08',surface:'#241810',surface2:'#2e2018',surface3:'#3a2a20',border:'#4a3828',border2:'#604830',accent:'#d4a574',accentBg:'rgba(212,165,116,0.1)',green:'#7dcea0',amber:'#f0b850',red:'#e57373',text:'#f0e8e0',text2:'#c0a890',text3:'#806850',chartLine:'#d4a574',chartFill:'#d4a574',gridLine:'#4a3828'}
+  workout:{bg:'#E8F0F8',surface:'#FFFFFF',surface2:'#F4F8FC',surface3:'#DCE8F4',border:'#C0D4E8',border2:'#A0BCD8',accent:'#3A6FA8',accentBg:'rgba(58,111,168,0.10)',green:'#2D8F5C',amber:'#C68A2E',red:'#C0392B',text:'#0F2540',text2:'#3A5878',text3:'#5A7090',chartLine:'#3A6FA8',chartFill:'#3A6FA8',gridLine:'#C0D4E8'},
+  stats:{bg:'#E8F0F8',surface:'#FFFFFF',surface2:'#F4F8FC',surface3:'#DCE8F4',border:'#C0D4E8',border2:'#A0BCD8',accent:'#3A6FA8',accentBg:'rgba(58,111,168,0.10)',green:'#2D8F5C',amber:'#C68A2E',red:'#C0392B',text:'#0F2540',text2:'#3A5878',text3:'#5A7090',chartLine:'#3A6FA8',chartFill:'#3A6FA8',gridLine:'#C0D4E8'},
+  records:{bg:'#E8F0F8',surface:'#FFFFFF',surface2:'#F4F8FC',surface3:'#DCE8F4',border:'#C0D4E8',border2:'#A0BCD8',accent:'#3A6FA8',accentBg:'rgba(58,111,168,0.10)',green:'#2D8F5C',amber:'#C68A2E',red:'#C0392B',text:'#0F2540',text2:'#3A5878',text3:'#5A7090',chartLine:'#3A6FA8',chartFill:'#3A6FA8',gridLine:'#C0D4E8'}
 };
 
 var QUOTES={
-  today:{text:"Wasting time is worse than death, for death separates you from this world, while wasting time separates you from Allah.",author:"Ibn Qayyim al-Jawziyyah"},
-  lifts:{text:"Whoever desires everlasting bliss, let him remain firmly in the threshold of servitude.",author:"Ibn Taymiyyah"},
+  workout:{text:"The true measure is the perfection of the endings, not the deficiency of the beginnings.",author:"Ibn Taymiyyah"},
   stats:{text:"Knowledge is not what is memorized, but what benefits.",author:"Ibn Taymiyyah"},
-  weekly:{text:"Patience is of three types: patience in worship, patience from sin, and patience with what Allah decrees.",author:"Ibn Qayyim al-Jawziyyah"}
+  records:{text:"Patience is of three types: patience in worship, patience from sin, and patience with what Allah decrees.",author:"Ibn Qayyim al-Jawziyyah"}
 };
 
 function applyTheme(name){
@@ -343,17 +337,17 @@ function getWeekLabel(){var n=new Date(),m=new Date(n);m.setDate(n.getDate()-((n
 document.getElementById('lab-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
 
 // ========== TABS ==========
-var TAB_NAMES=['today','lifts','stats','weekly'];
-var currentTab='today';
+var TAB_NAMES=['workout','stats','records'];
+var currentTab='workout';
 function switchTab(name){
   currentTab=name;
   document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',TAB_NAMES[i]===name);});
   document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
   document.getElementById('tab-'+name).classList.add('active');
   applyTheme(name);
-  if(name==='lifts'){renderLiftsGrid();renderSessions();}
+  if(name==='workout'){renderLiftsGrid();renderSessions();}
   if(name==='stats')renderStats();
-  if(name==='weekly')renderWeeklyLog();
+  if(name==='records')renderWeeklyLog();
 }
 
 // ========== GOALS ==========
@@ -386,9 +380,21 @@ function logGymSession(){
     if(kv&&rv)lifts.push({name:l.name,kg:parseFloat(kv),reps:parseInt(rv),sets:sv?parseInt(sv):0});
   });
   if(!lifts.length){alert('Enter at least one lift with both kg AND reps.');return;}
-  S.sessions.unshift({date:todayISO(),week:getWeekLabel(),lifts:lifts});
-  S.weeklyTargets.gym=(S.weeklyTargets.gym||0)+1;
-  saveLocal();renderTargets();markTrainingDay();renderSessions();
+  var iso=todayISO();
+  // Find today's existing session, if any. Append to it. Otherwise create new.
+  var existing=S.sessions.find(function(s){return s.date===iso;});
+  if(existing){
+    existing.lifts=existing.lifts.concat(lifts);
+  } else {
+    S.sessions.unshift({date:iso,week:getWeekLabel(),lifts:lifts});
+  }
+  // Only count as a training day ONCE per calendar day
+  var alreadyCountedToday=S.streak.lastDate===today();
+  if(!alreadyCountedToday){
+    S.weeklyTargets.gym=(S.weeklyTargets.gym||0)+1;
+    markTrainingDay();
+  }
+  saveLocal();renderTargets();renderSessions();
   S.lifts.forEach(function(_,i){['kg','reps','sets'].forEach(function(f){var el=document.getElementById('lift-'+f+'-'+i);if(el)el.value='';});});
 }
 function renderSessions(){
@@ -500,8 +506,8 @@ function renderLiftChart(){
 }
 
 // ========== INIT ==========
-applyTheme('today');
-renderGoals();renderTargets();renderStreak();renderLastBodyweight();
+applyTheme('workout');
+renderGoals();renderTargets();renderStreak();renderLastBodyweight();renderLiftsGrid();renderSessions();
 document.getElementById('pushup-count').textContent=S.pushups||0;
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('./training-sw.js').catch(function(){});}</script>
