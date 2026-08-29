@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>30 Day Reset</title>
+<meta name="theme-color" content="#f4f5f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="30 Day Reset">
+<link rel="apple-touch-icon" href="reset-icon-192.png">
+<link rel="icon" href="reset-icon-192.png">
+<link rel="manifest" href="reset-manifest.json">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--text:#17181b;--muted:#6d7178;--line:#e5e7eb;--accent:#111827;--good:#16803c;--danger:#c62828;--warn:#b45309;
+  --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text)}
+body.locked{overflow:hidden}
+.app{max-width:620px;margin:0 auto;padding:calc(22px + var(--safe-t)) 16px calc(44px + var(--safe-b))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h1{font-size:25px;margin:0}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 2px 10px #00000006}
+.hero{text-align:center;padding:24px 18px}
+.day{font-size:14px;color:var(--muted);font-weight:700;letter-spacing:.08em}
+.streak{font-size:34px;font-weight:800;margin:6px 0}
+.bar{height:9px;background:#e9eaed;border-radius:99px;overflow:hidden;margin:16px 0 7px}
+.fill{height:100%;background:var(--accent);transition:width .4s ease;width:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}
+.stat{background:#f7f7f8;border-radius:12px;padding:10px}
+.num{font-weight:800;font-size:19px;font-variant-numeric:tabular-nums}
+.label{font-size:11px;color:var(--muted)}
+.dots{display:grid;grid-template-columns:repeat(15,1fr);gap:4px;margin-top:16px}
+.dot{aspect-ratio:1/1;border-radius:4px;background:#e9eaed;border:1px solid transparent}
+.dot.done{background:var(--good)}
+.dot.miss{background:#fff;border-color:#e0c3c3}
+.dot.lapse{background:var(--danger)}
+.dot.now{border-color:var(--accent);background:#fff;box-shadow:inset 0 0 0 2px var(--accent)}
+h2{font-size:17px;margin:0 0 12px}
+.mission{background:#f7f7f8;border-radius:12px;padding:12px;font-size:14px}
+.mission b{display:block;margin-bottom:3px}
+.check{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);font-size:14px;cursor:pointer}
+.check:last-of-type{border-bottom:0}
+.check input{width:21px;height:21px;accent-color:var(--accent);cursor:pointer;flex:none}
+.check input:checked+span{color:var(--muted);text-decoration:line-through}
+button{border:0;border-radius:12px;padding:13px 15px;font-weight:750;cursor:pointer;font-size:14px;font-family:inherit;color:var(--text)}
+button:disabled{opacity:.55}
+.primary{background:var(--accent);color:#fff;width:100%;margin-top:14px}
+.urge{background:#fff;border:1px solid #ddd;width:100%;margin-top:8px}
+.danger{color:#fff;background:var(--danger);width:100%;margin-top:8px}
+.small{color:var(--muted);font-size:12px}
+.hidden{display:none !important}   /* must beat .modal's display:flex — equal specificity, so !important is required */
+.row{display:flex;gap:9px}
+.row button{flex:1;margin-top:0}
+textarea{width:100%;min-height:75px;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;resize:vertical;background:#fff;color:var(--text)}
+input[type=text],input[type=date],select{border:1px solid var(--line);padding:11px;border-radius:9px;font:inherit;background:#fff;color:var(--text);width:100%}
+.icon-btn{background:#fff;border:1px solid var(--line);padding:11px 13px}
+
+.modal{position:fixed;inset:0;background:#00000090;display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.modalbox{background:#fff;border-radius:20px 20px 0 0;width:min(590px,100%);max-height:82vh;display:flex;flex-direction:column;overflow:hidden}
+@media (min-width:640px){.modal{align-items:center;padding:16px}.modalbox{border-radius:20px;max-height:86vh}}
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line);flex:none}
+.mhead h2{margin:0;font-size:17px}
+.mclose{background:#f1f2f4;border-radius:99px;width:38px;height:38px;padding:0;font-size:16px;line-height:1;flex:none;color:var(--muted)}
+.mbody{padding:16px 18px calc(20px + var(--safe-b));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}
+.pill{background:#f1f2f4;border:1px solid transparent;border-radius:99px;padding:10px 13px;font-size:13px;font-weight:600}
+.pill[aria-pressed="true"]{background:#111827;color:#fff}
+.good{color:var(--good);font-weight:750}
+.quote{font-size:14px;line-height:1.5;color:#454951}
+.timer{font-size:32px;font-weight:800;text-align:center;margin:10px 0;font-variant-numeric:tabular-nums}
+.timer.ready{color:var(--good)}
+.field{margin-bottom:14px}
+.field>span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.hrow{display:flex;gap:7px;margin-bottom:7px}
+.hrow button{flex:none;width:44px;background:#f1f2f4;color:var(--muted);padding:9px 0}
+.log{border-bottom:1px solid var(--line);padding:11px 0;font-size:14px}
+.log:last-child{border-bottom:0}
+.log-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.log-d{font-size:12px;color:var(--muted)}
+.tag{font-size:11px;font-weight:750;padding:2px 8px;border-radius:99px}
+.t-held{background:#e7f4ec;color:var(--good)}
+.t-lapse{background:#fbeaea;color:var(--danger)}
+.t-open{background:#fdf2e0;color:var(--warn)}
+.log-n{color:#454951;margin-top:4px}
+.log-t{font-size:12px;color:var(--muted);margin-top:3px}
+.trg{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-size:13px}
+.trg-bar{flex:1;height:8px;background:#eceef1;border-radius:99px;overflow:hidden}
+.trg-bar i{display:block;height:100%;background:var(--accent)}
+.trg-n{font-size:12px;color:var(--muted);width:18px;text-align:right}
+.trg-k{width:96px;color:#454951}
+.empty{color:var(--muted);font-size:13px}
+details>summary{cursor:pointer;font-size:13px;color:var(--muted);margin-top:10px;padding:6px 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + var(--safe-b));transform:translateX(-50%);background:#111827;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px;z-index:40;max-width:88vw;text-align:center}
+.warnbar{background:#fbeaea;border:1px solid #f0c9c9;color:var(--danger);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+footer{text-align:center;color:var(--muted);font-size:11px;margin-top:18px}
+@media (max-width:520px){.dots{grid-template-columns:repeat(10,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><h1>30 Day Reset</h1><div class="sub" id="sub">A simple recovery system</div></div>
+  <button class="icon-btn" data-act="settings" aria-label="Settings">⚙</button>
+</header>
+
+<div class="warnbar hidden" id="storageWarn">
+  This browser is blocking saved data, so progress will not survive a reload. Export a backup from ⚙ settings.
+</div>
+
+<section class="card hero">
+  <div class="day" id="dayLabel">DAY 1 / 30</div>
+  <div class="streak" id="streak">🔥 0 DAY STREAK</div>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <div class="small" id="progressText">0 / 30 days completed</div>
+  <div class="stats">
+    <div class="stat"><div class="num" id="completed">0</div><div class="label">completed</div></div>
+    <div class="stat"><div class="num" id="best">0</div><div class="label">best streak</div></div>
+    <div class="stat"><div class="num" id="relapses">0</div><div class="label">relapses</div></div>
+  </div>
+  <div class="dots" id="dots"></div>
+</section>
+
+<section class="card hidden" id="cycleCard">
+  <h2>🏁 30 days done</h2>
+  <div class="quote">You have passed day 30. Your history stays. Start the next 30 with what you learned.</div>
+  <button class="primary" data-act="nextCycle">START NEXT 30 DAYS</button>
+</section>
+
+<section class="card">
+  <h2>🎯 Today's mission</h2>
+  <div class="mission" id="mission"></div>
+</section>
+
+<section class="card">
+  <h2>✅ Today</h2>
+  <div id="checks"></div>
+  <button class="primary" id="completeBtn" data-act="complete">COMPLETE TODAY</button>
+  <button class="urge" data-act="urge">⚡ I'M HAVING AN URGE</button>
+</section>
+
+<section class="card">
+  <h2>📝 Quick note</h2>
+  <textarea id="note" placeholder="Only write if there's something useful to remember..."></textarea>
+  <button class="primary" data-act="saveNote">SAVE NOTE</button>
+</section>
+
+<section class="card">
+  <h2>📊 What I've learned</h2>
+  <div id="triggers"></div>
+  <details>
+    <summary>Show full log</summary>
+    <div id="logList" style="margin-top:8px"></div>
+  </details>
+</section>
+
+<section class="card">
+  <h2>🚨 If I slip</h2>
+  <div class="quote">One lapse does not need to become a binge. Stop, learn what triggered it, fix the weak point, and continue.</div>
+  <button class="danger" data-act="relapse">I RELAPSED</button>
+</section>
+
+<footer>Saved in this browser · v4</footer>
+</div>
+
+<div class="modal hidden" id="modal" role="dialog" aria-modal="true">
+  <div class="modalbox">
+    <div class="mhead">
+      <h2 id="modalTitle"></h2>
+      <button class="mclose" data-act="close" aria-label="Close">✕</button>
+    </div>
+    <div class="mbody" id="modalContent"></div>
+  </div>
+</div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+/* ============================================================
+   No inline onclick anywhere: every control carries data-act and
+   is handled by one delegated listener, so a strict content
+   security policy cannot strip the handlers.
+   No alert()/confirm(): native dialogs are unreliable inside iOS
+   home-screen web apps and can leave the page frozen.
+   Every modal has a visible close button and a cancel path.
+   ============================================================ */
+
+/* ---------- storage ---------- */
+var KEY="reset30_v2", LEGACY="reset30_v1", mem={}, persistent=true;
+try{ localStorage.setItem("__p__","1"); localStorage.removeItem("__p__"); }catch(e){ persistent=false; }
+function readRaw(k){ if(!persistent) return mem[k]||null; try{ return localStorage.getItem(k); }catch(e){ return mem[k]||null; } }
+function writeRaw(k,v){ mem[k]=v; if(!persistent) return; try{ localStorage.setItem(k,v); }catch(e){ persistent=false; } }
+function dropRaw(k){ delete mem[k]; try{ localStorage.removeItem(k); }catch(e){} }
+
+/* ---------- dates: local, never UTC ---------- */
+function pad(n){ return String(n).padStart(2,"0"); }
+function isoLocal(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function today(){ var d=new Date(); d.setHours(d.getHours()-(S?S.dayStartHour:0)); return isoLocal(d); }
+function shiftDate(iso,n){ var d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+n); return isoLocal(d); }
+function daysBetween(a,b){ return Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/86400000); }
+function clockOf(ts){ var d=new Date(ts); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+
+/* ---------- state ---------- */
+var DEFAULT_HABITS=[{id:"h1",label:"No bad habit"},{id:"h2",label:"No social media"},
+  {id:"h3",label:"Avoided my main triggers"},{id:"h4",label:"Moved my body"},{id:"h5",label:"Phone away from bed"}];
+var TRIGGERS=["Boredom","Stress","Loneliness","Tired","Phone","Being alone","Late night","Habit cue"];
+var S=null;
+
+function blankState(){
+  return { version:2, target:"", startDate:isoLocal(new Date()), dayStartHour:0, cycle:1,
+    habits:DEFAULT_HABITS.map(function(h){ return {id:h.id,label:h.label}; }),
+    completed:[], checks:{}, notes:{}, urges:[], lapses:[] };
+}
+function loadState(){
+  var raw=readRaw(KEY);
+  if(raw){ try{ var p=JSON.parse(raw), b=blankState(); for(var k in p) b[k]=p[k]; return b; }catch(e){} }
+  return migrateV1()||blankState();
+}
+function migrateV1(){
+  var raw=readRaw(LEGACY); if(!raw) return null;
+  var o; try{ o=JSON.parse(raw); }catch(e){ return null; }
+  var s=blankState();
+  s.startDate=o.start||s.startDate;
+  s.completed=Array.isArray(o.completed)?o.completed.slice():[];
+  s.notes=o.notes||{};
+  s.checks={};
+  Object.keys(o.checks||{}).forEach(function(d){
+    s.checks[d]=(o.checks[d]||[]).map(function(i){ return DEFAULT_HABITS[i]&&DEFAULT_HABITS[i].id; }).filter(Boolean);
+  });
+  var logs=Array.isArray(o.relapseLogs)?o.relapseLogs:[];
+  s.lapses=logs.map(function(l,i){ return {id:"m"+i, ts:l.date?new Date(l.date+"T12:00:00").getTime():null,
+    date:l.date||null, triggers:[], note:l.note||""}; });
+  var extra=Math.max(0,(o.relapses||0)-s.lapses.length);
+  for(var i=0;i<extra;i++) s.lapses.push({id:"mx"+i,ts:null,date:null,triggers:[],note:""});
+  return s;
+}
+function save(){ writeRaw(KEY, JSON.stringify(S)); }
+
+/* ---------- derived ---------- */
+function dayNum(){ return daysBetween(S.startDate,today())+1; }
+function isDone(d){ return S.completed.indexOf(d)!==-1; }
+function lapseDates(){ var o={}; S.lapses.forEach(function(l){ if(l.date) o[l.date]=true; }); return o; }
+function currentStreak(){
+  var set={}; S.completed.forEach(function(d){ set[d]=true; });
+  var cur=today();
+  if(!set[cur]) cur=shiftDate(cur,-1);
+  var n=0; while(set[cur]){ n++; cur=shiftDate(cur,-1); }
+  return n;
+}
+function bestStreak(){
+  var sorted=S.completed.slice().sort(), best=0, run=0, prev=null;
+  sorted.forEach(function(d){ run=(prev&&daysBetween(prev,d)===1)?run+1:1; if(run>best)best=run; prev=d; });
+  return best;
+}
+
+var MISSIONS=[
+["Remove access","Delete, block and remove your easiest routes to the habit."],
+["Protect your environment","Identify the place where you usually relapse and change it."],
+["Identify the trigger","Notice what happens immediately before the urge."],
+["Beat boredom","Prepare one activity you can do immediately when bored."],
+["Protect your evenings","Make your highest-risk time structured."],
+["Move your body","Exercise or take a purposeful walk today."],
+["Review week one","What trigger appeared most often?"],
+["Replace the reward","Choose a healthy activity that gives you stimulation."],
+["Delay","Practice waiting 20 minutes before acting on any strong urge."],
+["Reduce isolation","Spend meaningful time around other people."],
+["Phone check","Remove one more digital trigger."],
+["Stress plan","Decide exactly what you will do when stressed."],
+["Sleep protection","Keep your phone away from your bed tonight."],
+["Review week two","What is working? What still needs protection?"],
+["Urges are temporary","Notice the urge without obeying it."],
+["Change location","If an urge hits, physically leave the environment."],
+["Find the first decision","Notice the tiny choice that usually starts the chain."],
+["Build momentum","Do one difficult productive task today."],
+["No negotiation","When the urge appears, follow your protocol immediately."],
+["Accountability","Check in with someone you trust if useful."],
+["Review week three","Identify your three strongest triggers."],
+["Future self","Write one reason you want this change to last."],
+["Strengthen barriers","Add one protection against your biggest trigger."],
+["Healthy reward","Do something enjoyable without returning to the habit."],
+["Practice discomfort","Let an urge or uncomfortable feeling pass without escaping."],
+["Routine check","Keep your vulnerable hours structured."],
+["Relapse rehearsal","Mentally practice what you will do if an urge hits."],
+["Review","What has changed since Day 1?"],
+["Beyond 30","Choose the habits and protections you will keep."],
+["Complete","Review your progress and decide your next 30 days."]];
+
+/* ---------- render ---------- */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+function render(){
+  var t=today(), d=dayNum(), done=S.completed.length, over=d>30;
+  $("storageWarn").classList.toggle("hidden",persistent);
+  $("sub").textContent=S.target||"A simple recovery system";
+  $("dayLabel").textContent=over?("DAY 30 / 30 · CYCLE "+S.cycle):("DAY "+Math.max(1,d)+" / 30");
+  $("streak").textContent="🔥 "+currentStreak()+" DAY STREAK";
+  $("fill").style.width=Math.min(100,done/30*100)+"%";
+  $("progressText").textContent=Math.min(done,30)+" / 30 days completed";
+  $("completed").textContent=done;
+  $("best").textContent=bestStreak();
+  $("relapses").textContent=S.lapses.length;
+  $("cycleCard").classList.toggle("hidden",!over);
+
+  var lap=lapseDates(), dots="";
+  for(var i=1;i<=30;i++){
+    var date=shiftDate(S.startDate,i-1), cls="dot";
+    if(lap[date]) cls+=" lapse";
+    else if(isDone(date)) cls+=" done";
+    else if(date<t) cls+=" miss";
+    if(date===t) cls+=" now";
+    dots+='<div class="'+cls+'" title="Day '+i+' · '+date+'"></div>';
+  }
+  $("dots").innerHTML=dots;
+
+  var n=Math.min(Math.max(d,1),30), m=MISSIONS[n-1];
+  $("mission").innerHTML="<b>Day "+n+" — "+esc(m[0])+"</b>"+esc(m[1]);
+
+  var saved=S.checks[t]||[];
+  $("checks").innerHTML=S.habits.map(function(h){
+    return '<label class="check"><input type="checkbox" data-habit="'+h.id+'" '+
+      (saved.indexOf(h.id)!==-1?"checked":"")+'><span>'+esc(h.label)+'</span></label>';
+  }).join("");
+
+  $("completeBtn").textContent=isDone(t)?"✓ TODAY COMPLETED":"COMPLETE TODAY";
+  $("completeBtn").disabled=isDone(t);
+  $("note").value=S.notes[t]||"";
+  renderTriggers(); renderLog();
+}
+
+function renderTriggers(){
+  var freq={}, max=0;
+  S.urges.concat(S.lapses).forEach(function(e){ (e.triggers||[]).forEach(function(k){ freq[k]=(freq[k]||0)+1; }); });
+  var keys=Object.keys(freq).sort(function(a,b){ return freq[b]-freq[a]; });
+  keys.forEach(function(k){ if(freq[k]>max) max=freq[k]; });
+  if(!keys.length){
+    $("triggers").innerHTML='<div class="empty">Log an urge and pick what caused it. After a few entries this shows which trigger is actually beating you.</div>';
+    return;
+  }
+  var held=S.urges.filter(function(u){ return u.outcome==="held"; }).length;
+  var resolved=S.urges.filter(function(u){ return u.outcome==="held"||u.outcome==="lapsed"; }).length;
+  $("triggers").innerHTML=keys.map(function(k){
+      return '<div class="trg"><span class="trg-k">'+esc(k)+'</span><span class="trg-bar"><i style="width:'+
+        (freq[k]/max*100)+'%"></i></span><span class="trg-n">'+freq[k]+'</span></div>'; }).join("")
+    +(resolved?'<div class="small" style="margin-top:10px">Urges you waited out: <b class="good">'+held+' of '+resolved+'</b></div>':"");
+}
+
+function renderLog(){
+  var ev=S.urges.map(function(u){ var o={}; for(var k in u)o[k]=u[k]; o.kind="urge"; return o; })
+    .concat(S.lapses.map(function(l){ var o={}; for(var k in l)o[k]=l[k]; o.kind="lapse"; return o; }))
+    .sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+  if(!ev.length){ $("logList").innerHTML='<div class="empty">Nothing logged yet.</div>'; return; }
+  $("logList").innerHTML=ev.map(function(e){
+    var cls="t-open", label="Urge — waiting";
+    if(e.kind==="lapse"){ cls="t-lapse"; label="Relapse"; }
+    else if(e.outcome==="held"){ cls="t-held"; label="Urge — beaten"; }
+    else if(e.outcome==="lapsed"){ cls="t-lapse"; label="Urge — lost"; }
+    return '<div class="log"><div class="log-h"><span class="tag '+cls+'">'+label+'</span><span class="log-d">'+
+      (e.date||"—")+(e.ts?" · "+clockOf(e.ts):"")+(e.kind==="urge"&&e.strength?" · "+e.strength+"/10":"")+
+      '</span></div>'+(e.note?'<div class="log-n">'+esc(e.note)+'</div>':"")+
+      ((e.triggers&&e.triggers.length)?'<div class="log-t">'+e.triggers.map(esc).join(" · ")+'</div>':"")+'</div>';
+  }).join("");
+}
+
+/* ---------- modal ---------- */
+var urgeTimer=null, pendingConfirm=null;
+function openModal(title,html){
+  $("modalTitle").textContent=title;
+  $("modalContent").innerHTML=html;
+  $("modal").classList.remove("hidden");
+  document.body.classList.add("locked");
+  $("modalContent").scrollTop=0;
+}
+function closeModal(){
+  clearInterval(urgeTimer);
+  $("modal").classList.add("hidden");
+  document.body.classList.remove("locked");
+  pendingConfirm=null;
+}
+function askConfirm(title,message,onYes){
+  pendingConfirm=onYes;
+  openModal(title,'<p style="margin-top:0;color:#454951;font-size:14px">'+esc(message)+'</p>'+
+    '<div class="row" style="margin-top:16px">'+
+    '<button class="urge" style="margin:0" data-act="close">CANCEL</button>'+
+    '<button class="danger" style="margin:0" data-act="confirmYes">YES, CONTINUE</button></div>');
+}
+
+/* ---------- screens ---------- */
+function screenUrge(){
+  openModal("⚡ Urge protocol",
+    '<p class="small" style="margin-top:0">STOP → LEAVE → WAIT 20 MIN → REPLACE. An urge does not require action.</p>'+
+    '<div class="timer" id="timer">20:00</div>'+
+    '<button class="urge" style="margin-top:0" data-act="timer">START 20 MIN</button>'+
+    '<div class="field" style="margin-top:16px"><span>What triggered it?</span><div class="pills" id="urgeTriggers">'+
+      TRIGGERS.map(function(x){ return '<button type="button" class="pill" data-act="pill" aria-pressed="false">'+x+'</button>'; }).join("")+
+    '</div></div>'+
+    '<div class="field"><span>Urge strength: <b id="uv">5</b>/10</span>'+
+      '<input id="urgeRange" style="width:100%" type="range" min="1" max="10" value="5"></div>'+
+    '<div class="field"><textarea id="urgeNote" placeholder="Where were you, what happened right before?"></textarea></div>'+
+    '<button class="primary" style="margin-top:0" data-act="urgeHeld">I WAITED — SAVE &amp; CONTINUE</button>'+
+    '<button class="urge" data-act="urgeSave">SAVE AND CLOSE</button>');
+}
+function screenRelapse(){
+  openModal("🚨 Reset after a slip",
+    '<p class="small" style="margin-top:0">Stop now. Do not turn one lapse into a longer relapse.</p>'+
+    '<div class="field"><span>What triggered it?</span><div class="pills" id="rTriggers">'+
+      TRIGGERS.map(function(x){ return '<button type="button" class="pill" data-act="pill" aria-pressed="false">'+x+'</button>'; }).join("")+
+    '</div></div>'+
+    '<div class="field"><textarea id="relapseNote" placeholder="What happened, and what will you change?"></textarea></div>'+
+    '<button class="danger" style="margin-top:0" data-act="relapseSave">LOG RELAPSE &amp; RESET STREAK</button>'+
+    '<button class="urge" data-act="close">CANCEL</button>');
+}
+function screenSettings(){
+  openModal("⚙ Settings",
+    '<p class="small" style="margin-top:0">Progress is stored only in this browser.</p>'+
+    '<div class="field"><span>What I am quitting (optional)</span>'+
+      '<input type="text" id="targetIn" value="'+esc(S.target)+'" placeholder="Name it plainly"></div>'+
+    '<div class="field"><span>Start date</span><input type="date" id="startIn" value="'+S.startDate+'"></div>'+
+    '<div class="field"><span>My day rolls over at (set later if you work nights)</span><select id="dayStartIn">'+
+      [0,3,4,5,6].map(function(h){ return '<option value="'+h+'"'+(S.dayStartHour===h?" selected":"")+'>'+pad(h)+':00</option>'; }).join("")+
+    '</select></div>'+
+    '<div class="field"><span>Daily checklist</span><div id="habitRows">'+
+      S.habits.map(function(h){ return '<div class="hrow" data-id="'+h.id+'"><input type="text" value="'+esc(h.label)+
+        '"><button data-act="habitDel" data-id="'+h.id+'" aria-label="Remove">✕</button></div>'; }).join("")+
+    '</div><button class="urge" style="margin-top:0" data-act="habitAdd">+ ADD ITEM</button></div>'+
+    '<button class="primary" style="margin-top:4px" data-act="settingsSave">SAVE SETTINGS</button>'+
+    '<div class="row" style="margin-top:8px">'+
+      '<button class="urge" data-act="export">EXPORT BACKUP</button>'+
+      '<button class="urge" data-act="importPick">IMPORT BACKUP</button></div>'+
+    '<input type="file" id="importFile" accept="application/json" class="hidden">'+
+    '<button class="danger" data-act="wipeAsk">DELETE ALL PROGRESS</button>');
+  $("importFile").addEventListener("change",function(){ importData(this); });
+}
+
+/* ---------- actions ---------- */
+var ACTIONS={
+  settings:screenSettings,
+  urge:screenUrge,
+  relapse:screenRelapse,
+  close:closeModal,
+  confirmYes:function(){ var fn=pendingConfirm; pendingConfirm=null; closeModal(); if(fn) fn(); },
+
+  complete:function(){
+    var t=today();
+    if(isDone(t)) return;
+    S.completed.push(t); S.completed.sort(); save(); render();
+    toast("Day complete. Streak: "+currentStreak()+".");
+  },
+  saveNote:function(){ S.notes[today()]=$("note").value; save(); toast("Note saved."); },
+  nextCycle:function(){ S.cycle++; S.startDate=today(); save(); render(); toast("Next 30 days started. History kept."); },
+
+  timer:function(){
+    clearInterval(urgeTimer);
+    var end=Date.now()+20*60*1000;
+    urgeTimer=setInterval(function(){
+      var box=$("timer");
+      if(!box){ clearInterval(urgeTimer); return; }
+      var ms=Math.max(0,end-Date.now());
+      box.textContent=pad(Math.floor(ms/60000))+":"+pad(Math.floor(ms/1000)%60);
+      if(ms<=0){ clearInterval(urgeTimer); box.classList.add("ready"); box.textContent="URGE PASSED"; }
+    },1000);
+  },
+  urgeHeld:function(){ saveUrge("held"); },
+  urgeSave:function(){ saveUrge("open"); },
+
+  relapseSave:function(){
+    var t=today();
+    S.lapses.push({id:"l"+Date.now(), ts:Date.now(), date:t,
+      triggers:pickedPills("rTriggers"), note:$("relapseNote").value.trim()});
+    S.urges.forEach(function(u){ if(u.date===t&&u.outcome==="open") u.outcome="lapsed"; });
+    S.completed=S.completed.filter(function(d){ return d!==t; });
+    save(); closeModal(); render();
+    toast("Logged. Streak reset, record kept.");
+  },
+
+  habitAdd:function(){ readHabitLabels(); S.habits.push({id:"h"+Date.now(),label:"New item"}); save(); screenSettings(); },
+  habitDel:function(btn){ readHabitLabels(); var id=btn.getAttribute("data-id");
+    S.habits=S.habits.filter(function(h){ return h.id!==id; }); save(); screenSettings(); },
+
+  settingsSave:function(){
+    var ns=$("startIn").value||S.startDate;
+    var tgt=$("targetIn").value.trim(), hr=Number($("dayStartIn").value);
+    readHabitLabels();
+    if(ns!==S.startDate && S.completed.length){
+      askConfirm("Change start date?","This moves the 30-day window. Your completed days and logs are kept.",
+        function(){ S.target=tgt; S.startDate=ns; S.dayStartHour=hr; save(); render(); toast("Settings saved."); });
+      return;
+    }
+    S.target=tgt; S.startDate=ns; S.dayStartHour=hr;
+    save(); closeModal(); render(); toast("Settings saved.");
+  },
+
+  export:function(){
+    var blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download="30-day-reset-backup-"+today()+".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+    toast("Backup exported.");
+  },
+  importPick:function(){ $("importFile").click(); },
+  wipeAsk:function(){
+    askConfirm("Delete everything?","All days, notes and logs will be gone. Export a backup first if you might want it.",
+      function(){ dropRaw(KEY); dropRaw(LEGACY); S=blankState(); save(); render(); toast("All progress deleted."); });
+  }
+};
+
+function saveUrge(outcome){
+  S.urges.push({ id:"u"+Date.now(), ts:Date.now(), date:today(),
+    strength:Number($("urgeRange").value), triggers:pickedPills("urgeTriggers"),
+    note:$("urgeNote").value.trim(), outcome:outcome });
+  save(); closeModal(); render();
+  toast(outcome==="held"?"Urge beaten. Logged.":"Urge logged.");
+}
+function readHabitLabels(){
+  var rows=document.querySelectorAll("#habitRows .hrow");
+  for(var i=0;i<rows.length;i++){
+    var id=rows[i].getAttribute("data-id"), val=rows[i].querySelector("input").value.trim();
+    S.habits.forEach(function(h){ if(h.id===id&&val) h.label=val; });
+  }
+}
+function pickedPills(id){
+  var out=[], els=document.querySelectorAll("#"+id+" .pill");
+  for(var i=0;i<els.length;i++) if(els[i].getAttribute("aria-pressed")==="true") out.push(els[i].textContent);
+  return out;
+}
+function importData(input){
+  var f=input.files&&input.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var data=JSON.parse(r.result);
+      if(!Array.isArray(data.completed)) throw 0;
+      var b=blankState(); for(var k in data) b[k]=data[k];
+      S=b; save(); closeModal(); render(); toast("Backup restored.");
+    }catch(e){ toast("That file is not a valid backup."); }
+    input.value="";
+  };
+  r.readAsText(f);
+}
+var toastTimer=null;
+function toast(msg){
+  var t=$("toast");
+  t.textContent=msg; t.classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.add("hidden"); },2600);
+}
+
+/* ---------- one delegated listener for every control ---------- */
+document.addEventListener("click",function(e){
+  var node=e.target, btn=null;
+  while(node && node!==document){
+    if(node.getAttribute && node.getAttribute("data-act")){ btn=node; break; }
+    node=node.parentNode;
+  }
+  if(!btn){ if(e.target.id==="modal") closeModal(); return; }
+  var act=btn.getAttribute("data-act");
+  if(act==="pill"){
+    btn.setAttribute("aria-pressed", btn.getAttribute("aria-pressed")==="true"?"false":"true");
+    return;
+  }
+  if(ACTIONS[act]) ACTIONS[act](btn);
+});
+document.addEventListener("change",function(e){
+  var id=e.target.getAttribute&&e.target.getAttribute("data-habit");
+  if(!id) return;
+  var t=today(), a=(S.checks[t]||[]).filter(function(x){ return x!==id; });
+  if(e.target.checked) a.push(id);
+  S.checks[t]=a; save();
+});
+document.addEventListener("input",function(e){
+  if(e.target.id==="urgeRange" && $("uv")) $("uv").textContent=e.target.value;
+});
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeModal(); });
+
+S=loadState(); save(); render();
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./reset-sw.js",{scope:"./reset"}).catch(function(){});
+}
+</script>
+</body>
+</html>
