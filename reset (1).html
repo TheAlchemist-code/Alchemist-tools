@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>30 Day Reset</title>
+<meta name="theme-color" content="#F5F0E8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="30 Day Reset">
+<link rel="apple-touch-icon" href="reset-icon-192.png">
+<link rel="icon" href="reset-icon-192.png">
+<link rel="manifest" href="reset-manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS — Alchemist beige, ink on sand
+   paper   #F5F0E8  samma cream som tracker.html
+   rule    #D4C9B0  linjen i pappret
+   ink     #4A3520  espresso, all text och alla ramar
+   gold    #C9A84C  Alchemist-accenten, core-markering
+   board   #1A6B6B  teal, samma som tracker Today
+   miss    #9E3B23  rödpenna
+   ============================================================ */
+:root{
+  --paper:#F5F0E8; --card:#FCFAF5; --rule:#D4C9B0;
+  --ink:#4A3520; --ink-soft:#8A7455; --gold:#C9A84C; --miss:#9E3B23;
+  --text:#2A2118; --muted:#8A7A63; --board:#1A6B6B; --board-text:#F5F0E8;
+  --hand:"Caveat", ui-rounded, "Bradley Hand", cursive;
+  --body:"Karla", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --r:10px;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--text);
+  font:16px/1.5 var(--body);
+  -webkit-font-smoothing:antialiased;
+}
+.hidden{display:none !important}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{
+  outline:2px solid var(--ink); outline-offset:2px}
+input,textarea,select{font:inherit;font-family:var(--body);color:var(--text);background:var(--card);
+  border:1px solid var(--rule);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical}
+
+.wrap{max-width:560px;margin:0 auto;padding:0 14px 120px}
+
+/* ---- citatet: dagens ram, inte dekoration ---- */
+.quote{border-bottom:1px solid var(--rule);padding:20px 4px 16px;text-align:center}
+.quote q{display:block;quotes:none;font-family:var(--hand);font-size:25px;line-height:1.24;
+  color:var(--ink);max-width:30ch;margin:0 auto}
+.quote cite{display:block;margin-top:8px;font-style:normal;font-size:11.5px;
+  letter-spacing:.02em;color:var(--muted)}
+
+/* ---- header: day number is the hero ---- */
+header.top{display:flex;align-items:baseline;gap:12px;padding:18px 0 12px}
+.daynum{font-family:var(--hand);font-size:56px;line-height:.85;font-weight:700;
+  letter-spacing:0;color:var(--ink)}
+.daynum small{font-family:var(--body);font-size:14px;font-weight:600;color:var(--muted)}
+.datecol{margin-left:auto;text-align:right;font-size:13px;color:var(--muted)}
+.datecol b{display:block;color:var(--text);font-size:15px;font-weight:600}
+
+/* ---- ruled sheet ---- */
+.sheet{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);
+  overflow:hidden;margin-bottom:16px}
+.sheet h2{margin:0;padding:9px 14px 7px;font-family:var(--hand);font-size:22px;font-weight:600;
+  letter-spacing:.01em;color:var(--ink);border-bottom:1px solid var(--rule);display:flex;gap:8px;align-items:center}
+.sheet h2 span{margin-left:auto;font-family:var(--body);font-size:13px;font-weight:600;
+  color:var(--muted);font-variant-numeric:tabular-nums}
+
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;
+  border-bottom:1px solid var(--rule);width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row .lbl{flex:1;min-width:0}
+.row .lbl b{font-weight:500;display:block}
+.row .lbl i{font-style:normal;font-size:12px;color:var(--muted)}
+.core{color:#8A6E1F;font-size:10.5px;font-weight:700;border:1px solid var(--gold);background:rgba(201,168,76,.14);
+  border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:1px}
+
+.mark{flex:none;width:30px;height:30px;border:1.5px solid var(--rule);border-radius:8px;
+  display:grid;place-items:center;font-family:var(--hand);font-size:24px;font-weight:700;
+  color:transparent;padding-bottom:2px}
+.row[data-on="1"] .mark{border-color:var(--ink);color:var(--ink)}
+.row[data-on="0"] .mark{border-color:var(--miss);color:var(--miss)}
+
+.numrow{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--rule)}
+.numrow input{width:84px;text-align:center;font-variant-numeric:tabular-nums}
+.numrow .lbl{flex:1}
+.pad{padding:12px 14px}
+
+/* ---- dagnavigering ---- */
+.daynav{display:flex;gap:6px;margin-bottom:16px}
+.daynav button{flex:1;padding:10px 4px;border:1px solid var(--rule);border-radius:8px;
+  background:var(--card);font-size:13.5px;font-weight:600;color:var(--ink)}
+.daynav button[disabled]{color:var(--muted);opacity:.5}
+.closedtag{font-size:11.5px;font-weight:700;color:#8A6E1F;border:1px solid var(--gold);
+  border-radius:4px;padding:1px 5px;margin-left:8px;vertical-align:3px}
+
+/* ---- scoreboard: the one loud element ---- */
+.board{background:var(--board);color:var(--board-text);border-radius:var(--r);padding:16px 14px 14px;
+  margin-bottom:16px}
+.seg{display:flex;gap:2px;background:rgba(255,255,255,.09);border-radius:8px;padding:2px;margin-bottom:14px}
+.seg button{flex:1;padding:6px 4px;border-radius:6px;font-size:12.5px;font-weight:600;
+  color:rgba(255,255,255,.62)}
+.seg button[aria-pressed="true"]{background:var(--board-text);color:var(--board)}
+.cats{display:flex;border-top:1px solid rgba(255,255,255,.16);
+  border-bottom:1px solid rgba(255,255,255,.16)}
+.cat{flex:1;padding:12px 4px;text-align:center}
+.cat + .cat{border-left:1px solid rgba(255,255,255,.16)}
+.cat u{display:block;text-decoration:none;font-size:11.5px;color:rgba(255,255,255,.58);margin-bottom:3px}
+.cat b{font-family:var(--hand);font-size:25px;font-weight:600;line-height:1}
+.total{display:flex;align-items:baseline;gap:10px;padding-top:13px}
+.total u{text-decoration:none;font-size:12px;color:rgba(255,255,255,.58)}
+.total b{margin-left:auto;font-family:var(--hand);font-size:40px;font-weight:700;
+  letter-spacing:0;line-height:.9}
+.total i{font-style:normal;font-size:13px;color:rgba(255,255,255,.58);font-variant-numeric:tabular-nums}
+
+.btn{display:block;width:100%;padding:13px;border-radius:var(--r);font-weight:600;
+  background:var(--ink);color:#fff;text-align:center}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.btn.warn{background:transparent;color:var(--miss);border:1px solid var(--miss)}
+.btn + .btn{margin-top:10px}
+
+/* ---- history grid ---- */
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:14px}
+.cell{aspect-ratio:1;border-radius:8px;border:1px solid var(--rule);display:grid;
+  place-items:center;font-size:12px;font-weight:600;color:var(--muted);
+  font-variant-numeric:tabular-nums;background:var(--card)}
+.cell[data-t="hi"]{background:var(--board);border-color:var(--board);color:#F5F0E8}
+.cell[data-t="mid"]{background:var(--ink-soft);border-color:var(--ink-soft);color:#FCFAF5}
+.cell[data-t="lo"]{background:var(--miss);border-color:var(--miss);color:#fff}
+.cell[data-t="now"]{border-color:var(--ink);border-width:2px;color:var(--ink)}
+
+/* ---- settings item editor ---- */
+.edit{padding:12px 14px;border-bottom:1px solid var(--rule)}
+.edit .line{display:flex;gap:8px;margin-top:8px}
+.edit .line select{flex:1}
+.del{flex:none;width:42px;color:var(--miss);border:1px solid var(--rule);border-radius:8px}
+
+/* ---- tab bar ---- */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);
+  border-top:1px solid var(--rule);display:flex;
+  padding-bottom:env(safe-area-inset-bottom,0px);z-index:40}
+nav.tabs button{flex:1;padding:12px 4px 14px;font-size:12.5px;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{color:var(--ink)}
+
+/* ---- dialog (no native confirm: it freezes standalone iOS) ---- */
+.modal{position:fixed;inset:0;background:rgba(6,10,18,.55);display:flex;align-items:flex-end;
+  justify-content:center;z-index:60;padding:0}
+.modal .box{background:var(--card);border-radius:14px 14px 0 0;width:100%;max-width:560px;
+  max-height:82vh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.modal h3{margin:0 0 8px;font-size:17px}
+.modal p{margin:0 0 16px;color:var(--muted);font-size:14.5px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));
+  background:var(--board);color:var(--board-text);padding:10px 16px;border-radius:999px;
+  font-size:13.5px;z-index:70}
+@media (prefers-reduced-motion:no-preference){
+  .toast{animation:pop .18s ease-out}
+  @keyframes pop{from{opacity:0;transform:translate(-50%,6px)}}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <blockquote class="quote">
+    <q>What really matters are good endings, not flawed beginnings.</q>
+    <cite>Ibn Taymiyyah — Minhāj as-Sunnah 8/416</cite>
+  </blockquote>
+
+  <header class="top">
+    <div class="daynum" id="dayNum">–<small> / 30</small></div>
+    <div class="datecol"><b id="dateLine">—</b><span id="weekLine"></span></div>
+  </header>
+
+  <main id="viewToday"></main>
+  <main id="viewHistory" class="hidden"></main>
+  <main id="viewSettings" class="hidden"></main>
+</div>
+
+<nav class="tabs">
+  <button data-act="tab" data-v="Today" aria-selected="true">Idag</button>
+  <button data-act="tab" data-v="History" aria-selected="false">Historik</button>
+  <button data-act="tab" data-v="Settings" aria-selected="false">Inställningar</button>
+</nav>
+
+<script>
+"use strict";
+/* ==========================================================================
+   1. STORAGE
+   Sparar ENDAST råvärden + en snapshot av item-listan per dag.
+   Poängen räknas vid läsning. Därför kan scoring-läget bytas när som helst
+   utan att historiken blir fel.
+   ========================================================================== */
+var KEY = "reset30.v2";
+
+var DEFAULT_ITEMS = [
+  {id:"fajr",     cat:"islamic",    label:"Fajr i tid",              weight:3, type:"bool"},
+  {id:"prayers5", cat:"islamic",    label:"5 böner i tid",           weight:3, type:"bool"},
+  {id:"quran",    cat:"islamic",    label:"Läsa Quran",              weight:3, type:"bool"},
+  {id:"azkar",    cat:"islamic",    label:"Morgon-azkar",            weight:1, type:"bool"},
+  {id:"mulk",     cat:"islamic",    label:"Surah Mulk",              weight:1, type:"bool"},
+  {id:"book",     cat:"islamic",    label:"Islamisk bok, 10 min",    weight:1, type:"bool"},
+  {id:"sadaqah",  cat:"islamic",    label:"Sadaqah",                 weight:1, type:"bool"},
+  {id:"dua",      cat:"islamic",    label:"Dua före sömn",           weight:1, type:"bool"},
+  {id:"istighfar",cat:"islamic",    label:"Istighfar 100x",          weight:1, type:"bool"},
+
+  {id:"nophone",  cat:"discipline", label:"Ingen telefon första timmen", weight:3, type:"bool"},
+  {id:"workout",  cat:"discipline", label:"Träning 20 min",          weight:3, type:"bool"},
+  {id:"eatclean", cat:"discipline", label:"Äta rent, inget skräp",   weight:3, type:"bool"},
+  {id:"plan3",    cat:"discipline", label:"Planera dagens tre mål",  weight:3, type:"bool"},
+  {id:"sleep",    cat:"discipline", label:"Sova före 00:00",         weight:3, type:"bool"},
+  {id:"walk",     cat:"discipline", label:"Dagsljus / promenad 15 min", weight:1, type:"bool"},
+  {id:"bed",      cat:"discipline", label:"Bädda sängen",            weight:1, type:"bool"},
+  {id:"cold",     cat:"discipline", label:"Kall dusch",              weight:1, type:"bool"},
+  {id:"water",    cat:"discipline", label:"3 liter vatten",          weight:1, type:"bool"},
+  {id:"read10",   cat:"discipline", label:"Läsa 10 sidor",           weight:1, type:"bool"},
+  {id:"screen",   cat:"discipline", label:"Skärmtid",                weight:3, type:"number",
+                  target:4, direction:"under", unit:"h"},
+
+  {id:"grateful", cat:"mental",     label:"En sak du är tacksam för", weight:1, type:"text"}
+];
+
+var CATS = {islamic:"Islamic", discipline:"Discipline", mental:"Mental"};
+
+var state = load();
+
+function load(){
+  var raw = null;
+  try { raw = localStorage.getItem(KEY); } catch(e){}
+  if (raw) {
+    try {
+      var s = JSON.parse(raw);
+      if (s && s.items && s.days) return s;
+    } catch(e){}
+  }
+  return { start: todayKey(), mode: "weighted", items: clone(DEFAULT_ITEMS), days: {} };
+}
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch(e){ toast("Kunde inte spara"); }
+}
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* ==========================================================================
+   2. DATUM
+   Allt räknas på lokal tid med klockan låst till 12:00.
+   toISOString() ger fel dag i UTC+1/+2 — den fällan är stängd här.
+   ========================================================================== */
+function pad(n){ return (n<10?"0":"") + n; }
+function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
+function todayKey(){ return ymd(new Date()); }
+function atNoon(key){
+  var p = key.split("-");
+  return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0, 0);
+}
+function addDays(key, n){
+  var d = atNoon(key); d.setDate(d.getDate() + n); return ymd(d);
+}
+function dayIndex(key){                      // 1 = första dagen
+  return Math.round((atNoon(key) - atNoon(state.start)) / 86400000) + 1;
+}
+var WEEK = ["Söndag","Måndag","Tisdag","Onsdag","Torsdag","Fredag","Lördag"];
+var MON  = ["jan","feb","mar","apr","maj","jun","jul","aug","sep","okt","nov","dec"];
+function human(key){ var d = atNoon(key); return d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
+
+/* ==========================================================================
+   3. SCORING — rena funktioner, inget sparas
+   ========================================================================== */
+function hit(item, v){
+  if (v === undefined || v === null || v === "") return 0;
+  if (item.type === "bool")   return v === true ? 1 : 0;
+  if (item.type === "text")   return String(v).trim() ? 1 : 0;
+  var n = Number(v);
+  if (isNaN(n)) return 0;
+  return item.direction === "under" ? (n <= item.target ? 1 : 0)
+                                    : (n >= item.target ? 1 : 0);
+}
+function scoreDay(day, mode){
+  var acc = {islamic:[0,0], discipline:[0,0], mental:[0,0], total:[0,0]};
+  var items = day && day.items ? day.items : state.items;
+  for (var i=0; i<items.length; i++){
+    var it = items[i];
+    var w  = mode === "weighted" ? (it.weight || 1) : 1;
+    var g  = hit(it, day ? day.values[it.id] : undefined) * w;
+    if (!acc[it.cat]) acc[it.cat] = [0,0];
+    acc[it.cat][0] += g;  acc[it.cat][1] += w;
+    acc.total[0]   += g;  acc.total[1]   += w;
+  }
+  return acc;
+}
+function pct(pair){ return pair[1] ? Math.round(pair[0] / pair[1] * 1000) / 10 : 0; }
+
+/* ==========================================================================
+   4. DAGSOBJEKT
+   Snapshot tas vid första skrivningen. Ändrar du listan dag 12 rörs inte dag 3.
+   ========================================================================== */
+var current = todayKey();
+
+function getDay(key, create){
+  var d = state.days[key];
+  if (!d && create){
+    d = { values:{}, items: clone(state.items), reflection:"", closed:false };
+    state.days[key] = d;
+  }
+  return d;
+}
+
+/* ==========================================================================
+   5. RENDER
+   ========================================================================== */
+var view = "Today";
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+  });
+}
+
+function render(){
+  document.getElementById("viewToday").classList.toggle("hidden", view !== "Today");
+  document.getElementById("viewHistory").classList.toggle("hidden", view !== "History");
+  document.getElementById("viewSettings").classList.toggle("hidden", view !== "Settings");
+  var tabs = document.querySelectorAll("nav.tabs button");
+  for (var i=0;i<tabs.length;i++) tabs[i].setAttribute("aria-selected", tabs[i].dataset.v === view ? "true":"false");
+
+  document.getElementById("dayNum").innerHTML = dayIndex(current) + "<small> / 30</small>";
+  document.getElementById("dateLine").textContent = human(current);
+  document.getElementById("weekLine").textContent = WEEK[atNoon(current).getDay()];
+
+  if (view === "Today")    renderToday();
+  if (view === "History")  renderHistory();
+  if (view === "Settings") renderSettings();
+}
+
+function renderToday(){
+  var day   = getDay(current, false);
+  var items = day ? day.items : state.items;
+  var idx   = dayIndex(current);
+  var isNow = current === todayKey();
+
+  var html = '<div class="daynav">' +
+    '<button data-act="step" data-n="-1">‹ Föregående</button>' +
+    '<button data-act="step" data-n="0"' + (isNow ? " disabled" : "") + '>Idag</button>' +
+    '<button data-act="step" data-n="1"' + (isNow ? " disabled" : "") + '>Nästa ›</button>' +
+  '</div>';
+
+  ["islamic","discipline","mental"].forEach(function(cat){
+    var list = items.filter(function(it){ return it.cat === cat; });
+    if (!list.length) return;
+    var s = scoreDay(day, state.mode);
+    html += '<section class="sheet"><h2>' + CATS[cat] +
+            '<span>' + (s[cat] ? s[cat][0] + " / " + s[cat][1] : "0 / 0") + '</span></h2>';
+
+    list.forEach(function(it){
+      var v = day ? day.values[it.id] : undefined;
+
+      if (it.type === "bool"){
+        var st = v === true ? "1" : (v === false ? "0" : "");
+        html += '<button class="row" data-act="cycle" data-id="' + it.id + '" data-on="' + st + '">' +
+                  '<span class="mark">' + (v === false ? "✗" : "✓") + '</span>' +
+                  '<span class="lbl"><b>' + esc(it.label) +
+                  (it.weight >= 3 ? '<span class="core">core</span>' : '') + '</b></span>' +
+                '</button>';
+
+      } else if (it.type === "number"){
+        html += '<div class="numrow"><span class="lbl"><b>' + esc(it.label) +
+                  (it.weight >= 3 ? '<span class="core">core</span>' : '') + '</b>' +
+                  '<i>mål: ' + (it.direction === "under" ? "max " : "minst ") + it.target +
+                  " " + (it.unit || "") + '</i></span>' +
+                '<input type="number" inputmode="decimal" step="0.25" data-act="num" data-id="' + it.id +
+                  '" value="' + (v === undefined ? "" : esc(v)) + '"></div>';
+
+      } else {
+        html += '<div class="pad"><label style="font-size:13px;color:var(--muted)">' +
+                  esc(it.label) + '</label>' +
+                '<textarea rows="2" data-act="text" data-id="' + it.id + '" style="margin-top:6px">' +
+                  (v ? esc(v) : "") + '</textarea></div>';
+      }
+    });
+    html += '</section>';
+  });
+
+  html += '<section class="sheet"><h2>Reflektion</h2><div class="pad">' +
+          '<textarea rows="4" data-act="reflection" placeholder="Vad gick fel idag, och vad är orsaken?">' +
+          (day && day.reflection ? esc(day.reflection) : "") + '</textarea></div></section>';
+
+  html += boardHTML(day);
+
+  var closed = day && day.closed;
+  html += '<button class="btn' + (closed ? " ghost" : "") + '" data-act="close">' +
+          (closed ? "Dagen är stängd — öppna igen" : "Stäng dagen") + '</button>';
+  if (closed)
+    html += '<p style="color:var(--muted);font-size:13px;text-align:center;margin:10px 0 0">' +
+            'Du kan ändra en stängd dag. Poängen räknas om direkt.</p>';
+
+  document.getElementById("viewToday").innerHTML = html;
+}
+
+function boardHTML(day){
+  var s = scoreDay(day, state.mode);
+  var h = '<div class="board"><div class="cats">';
+  ["islamic","discipline","mental"].forEach(function(c){
+    var p = s[c] || [0,0];
+    h += '<div class="cat"><u>' + CATS[c] + '</u><b>' + p[0] + " / " + p[1] + '</b></div>';
+  });
+  h += '</div><div class="total"><u>Total</u><i>' + s.total[0] + " / " + s.total[1] + '</i>' +
+       '<b>' + pct(s.total) + '%</b></div></div>';
+  return h;
+}
+
+function renderHistory(){
+  var cells = "", sum = 0, n = 0;
+  for (var i=0; i<30; i++){
+    var key = addDays(state.start, i);
+    var day = state.days[key];
+    var t = "";
+    if (key === todayKey()) t = "now";
+    if (day && day.closed){
+      var p = pct(scoreDay(day, state.mode));
+      sum += p; n++;
+      t = p >= 85 ? "hi" : (p >= 60 ? "mid" : "lo");
+    }
+    cells += '<button class="cell" data-act="goto" data-k="' + key + '" data-t="' + t + '">' + (i+1) + '</button>';
+  }
+  document.getElementById("viewHistory").innerHTML =
+    '<section class="sheet"><h2>30 dagar<span>' + n + ' stängda</span></h2>' +
+    '<div class="grid">' + cells + '</div>' +
+    '<div class="pad" style="border-top:1px solid var(--rule);color:var(--muted);font-size:14px">' +
+      'Snitt på stängda dagar: <b style="color:var(--text)">' +
+      (n ? Math.round(sum/n*10)/10 : 0) + '%</b> — läge: ' +
+      (state.mode === "weighted" ? "viktad" : "platt") + '</div></section>';
+}
+
+function renderSettings(){
+  var h = '<section class="sheet"><h2>Start<span>dag 1</span></h2><div class="pad">' +
+          '<input type="date" data-act="start" value="' + state.start + '">' +
+          '<p style="color:var(--muted);font-size:13px;margin:8px 0 0">' +
+          'Ändrar bara numreringen. Sparade dagar ligger kvar på sina datum.</p></div></section>';
+
+  h += '<section class="sheet"><h2>Punkter<span>' + state.items.length + '</span></h2>';
+  state.items.forEach(function(it, idx){
+    h += '<div class="edit">' +
+      '<input data-act="ilabel" data-i="' + idx + '" value="' + esc(it.label) + '">' +
+      '<div class="line">' +
+        sel("icat", idx, [["islamic","Islamic"],["discipline","Discipline"],["mental","Mental"]], it.cat) +
+        sel("iweight", idx, [["3","Core (3)"],["1","Bonus (1)"]], String(it.weight)) +
+        sel("itype", idx, [["bool","Ja/nej"],["number","Siffra"],["text","Text"]], it.type) +
+        '<button class="del" data-act="idel" data-i="' + idx + '">✕</button>' +
+      '</div>';
+    if (it.type === "number"){
+      h += '<div class="line">' +
+        '<input type="number" step="0.25" data-act="itarget" data-i="' + idx + '" value="' + it.target + '" placeholder="mål">' +
+        sel("idir", idx, [["under","Max"],["over","Minst"]], it.direction || "under") +
+        '<input data-act="iunit" data-i="' + idx + '" value="' + esc(it.unit||"") + '" placeholder="enhet">' +
+      '</div>';
+    }
+    h += '</div>';
+  });
+  h += '<div class="pad"><button class="btn ghost" data-act="iadd">Lägg till punkt</button></div></section>';
+
+  h += '<section class="sheet"><h2>Data</h2><div class="pad">' +
+       '<button class="btn ghost" data-act="export">Visa säkerhetskopia</button>' +
+       '<button class="btn warn" data-act="wipe">Radera allt</button></div></section>';
+
+  document.getElementById("viewSettings").innerHTML = h;
+}
+function sel(act, idx, opts, val){
+  var s = '<select data-act="' + act + '" data-i="' + idx + '">';
+  opts.forEach(function(o){
+    s += '<option value="' + o[0] + '"' + (o[0] === val ? " selected" : "") + '>' + o[1] + '</option>';
+  });
+  return s + '</select>';
+}
+
+/* ==========================================================================
+   6. EVENTS — delegerat. Inga inline onclick: de dör i standalone-läge på iOS.
+   ========================================================================== */
+document.addEventListener("click", function(e){
+  var el = e.target.closest("[data-act]");
+  if (!el) return;
+  var act = el.dataset.act;
+
+  if (act === "tab"){ view = el.dataset.v; render(); return; }
+  if (act === "goto"){ current = el.dataset.k; view = "Today"; render(); return; }
+  if (act === "step"){
+    var n = +el.dataset.n;
+    current = n === 0 ? todayKey() : addDays(current, n);
+    if (atNoon(current) > atNoon(todayKey())) current = todayKey();   // ingen framtid
+    render(); return;
+  }
+
+  if (act === "cycle"){                       // tom → ✓ → ✗ → tom
+    var d = getDay(current, true), id = el.dataset.id, v = d.values[id];
+    d.values[id] = v === undefined ? true : (v === true ? false : undefined);
+    if (d.values[id] === undefined) delete d.values[id];
+    save(); renderToday(); return;
+  }
+
+  if (act === "close"){
+    var day = getDay(current, true);
+    if (day.closed){ day.closed = false; save(); renderToday(); return; }
+    day.items = clone(state.items);           // frys listan som dagen bedömdes mot
+    day.closed = true; save(); renderToday();
+    toast("Dag " + dayIndex(current) + " stängd — " + pct(scoreDay(day, state.mode)) + "%");
+    return;
+  }
+
+  if (act === "iadd"){
+    state.items.push({id:"i"+Date.now(), cat:"discipline", label:"Ny punkt", weight:1, type:"bool"});
+    save(); renderSettings(); return;
+  }
+  if (act === "idel"){
+    var i = +el.dataset.i, name = state.items[i].label;
+    ask("Ta bort punkten?", esc(name) + " försvinner från kommande dagar. Stängda dagar påverkas inte.",
+      function(){ state.items.splice(i,1); save(); renderSettings(); });
+    return;
+  }
+  if (act === "export"){
+    ask("Säkerhetskopia", "Markera texten och kopiera den. Klistra in i en anteckning.",
+      null, '<textarea rows="6" readonly>' + esc(JSON.stringify(state)) + '</textarea>');
+    return;
+  }
+  if (act === "wipe"){
+    ask("Radera allt?", "Alla 30 dagar, punkter och reflektioner tas bort. Går inte att ångra.",
+      function(){ try{localStorage.removeItem(KEY);}catch(e){}
+        state = load(); current = todayKey(); view = "Today"; render(); });
+    return;
+  }
+});
+
+document.addEventListener("input", function(e){
+  var el = e.target.closest("[data-act]");
+  if (!el) return;
+  var a = el.dataset.act, i = +el.dataset.i, d;
+
+  if (a === "num"){  d = getDay(current, true); d.values[el.dataset.id] = el.value; save(); return; }
+  if (a === "text"){ d = getDay(current, true); d.values[el.dataset.id] = el.value; save(); return; }
+  if (a === "reflection"){ d = getDay(current, true); d.reflection = el.value; save(); return; }
+
+  if (a === "start"){ if (el.value){ state.start = el.value; save(); render(); } return; }
+  if (a === "ilabel"){ state.items[i].label = el.value; save(); return; }
+  if (a === "itarget"){ state.items[i].target = Number(el.value); save(); return; }
+  if (a === "iunit"){ state.items[i].unit = el.value; save(); return; }
+});
+
+document.addEventListener("change", function(e){
+  var el = e.target.closest("[data-act]");
+  if (!el) return;
+  var a = el.dataset.act, i = +el.dataset.i;
+  if (a === "num"){ renderToday(); return; }   // poängen uppdateras när fältet lämnas
+  if (a === "icat"){ state.items[i].cat = el.value; save(); renderSettings(); return; }
+  if (a === "iweight"){ state.items[i].weight = +el.value; save(); renderSettings(); return; }
+  if (a === "itype"){
+    var it = state.items[i];
+    it.type = el.value;
+    if (it.type === "number"){ if (it.target === undefined) it.target = 4; if (!it.direction) it.direction = "under"; }
+    save(); renderSettings(); return;
+  }
+  if (a === "idir"){ state.items[i].direction = el.value; save(); return; }
+});
+
+/* ---- dialog + toast ---- */
+function ask(title, body, onYes, extraHTML){
+  var m = document.createElement("div");
+  m.className = "modal";
+  m.innerHTML = '<div class="box"><h3>' + title + '</h3><p>' + body + '</p>' +
+    (extraHTML || "") +
+    '<div style="margin-top:14px">' +
+    (onYes ? '<button class="btn" data-yes>Ja, gör det</button>' : '') +
+    '<button class="btn ghost" data-no>' + (onYes ? "Avbryt" : "Stäng") + '</button></div></div>';
+  m.addEventListener("click", function(ev){
+    if (ev.target === m || ev.target.closest("[data-no]")) m.remove();
+    else if (ev.target.closest("[data-yes]")){ m.remove(); onYes(); }
+  });
+  document.body.appendChild(m);
+}
+function toast(msg){
+  var t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2200);
+}
+
+/* ==========================================================================
+   7. DYGNSSKIFTE
+   Appen kan ligga öppen i bakgrunden i flera dygn. Utan det här visar den
+   fortfarande den dag den startades.
+   ========================================================================== */
+var openedOn = todayKey();
+function checkRollover(){
+  var t = todayKey();
+  if (t === openedOn) return;
+  var wasOnToday = current === openedOn;   // står du på en gammal dag, stör vi dig inte
+  openedOn = t;
+  if (wasOnToday) current = t;
+  render();
+}
+setInterval(checkRollover, 60000);
+document.addEventListener("visibilitychange", function(){ if (!document.hidden) checkRollover(); });
+window.addEventListener("focus", checkRollover);
+window.addEventListener("pageshow", checkRollover);
+
+render();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./reset-sw.js", { scope: "./reset" }).catch(function(){});
+}
+</script>
+</body>
+</html>
