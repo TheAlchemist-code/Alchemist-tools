@@ -80,8 +80,8 @@ header.top{display:flex;align-items:baseline;gap:12px;padding:18px 0 12px}
   border-bottom:1px solid var(--rule);width:100%;text-align:left}
 .row:last-child{border-bottom:0}
 .row .lbl{flex:1;min-width:0}
-.row .lbl b{font-weight:500;display:block}
-.row .lbl i{font-style:normal;font-size:12px;color:var(--muted)}
+.lbl b{font-weight:500;display:block}
+.lbl i{font-style:normal;display:block;margin-top:2px;font-size:12px;color:var(--muted)}
 .core{color:#8A6E1F;font-size:10.5px;font-weight:700;border:1px solid var(--gold);background:rgba(201,168,76,.14);
   border-radius:4px;padding:0 4px;margin-left:6px;vertical-align:1px}
 
@@ -231,9 +231,21 @@ var DEFAULT_ITEMS = [
 
 var CATS = {islamic:"Islamic", discipline:"Discipline", mental:"Mental"};
 
-var state = load();
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function blank(){ return { start: todayKey(), mode:"weighted", items: clone(DEFAULT_ITEMS), days:{} }; }
 
-function load(){
+/* Två lagringslägen, samma fil.
+   "local" — localStorage. Gäller på GitHub Pages: synkront, offline, på enheten.
+   "db"    — artifact-lagring. Gäller när sidan körs som en publicerad artifact,
+             där localStorage inte finns. Asynkront, därför debounce.
+   Läget väljs av omgivningen, inte av en flagga jag sätter här. */
+var storage = "local";
+var DB = null;
+var touched = false;                 // har användaren hunnit ändra före hydrering?
+
+var state = loadLocal();
+
+function loadLocal(){
   var raw = null;
   try { raw = localStorage.getItem(KEY); } catch(e){}
   if (raw) {
@@ -242,13 +254,77 @@ function load(){
       if (s && s.items && s.days) return s;
     } catch(e){}
   }
-  return { start: todayKey(), mode: "weighted", items: clone(DEFAULT_ITEMS), days: {} };
+  return blank();
 }
+
+/* save() anropas från varje event i appen och får inte veta vilket
+   lagringsläge som gäller. Den markerar bara smutsigt och låter
+   flush() avgöra vart det skrivs. */
+var dirtyDays = {}, dirtyCfg = false, flushTimer = null;
+
 function save(){
-  try { localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch(e){ toast("Kunde inte spara"); }
+  touched = true;
+  if (storage === "local"){
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch(e){ toast("Kunde inte spara"); }
+    return;
+  }
+  dirtyCfg = true;
+  dirtyDays[current] = true;
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(flush, 700);   // en skrivning per paus, inte per tangenttryck
 }
-function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+function flush(){
+  if (!DB) return;
+  var jobs = [];
+  if (dirtyCfg){
+    dirtyCfg = false;
+    jobs.push(DB.doc("app/config").set({
+      start: state.start, mode: state.mode, items: state.items
+    }));
+  }
+  Object.keys(dirtyDays).forEach(function(k){
+    delete dirtyDays[k];
+    var d = state.days[k];
+    if (d) jobs.push(DB.doc("days/" + k).set(d));
+  });
+  Promise.all(jobs).catch(function(){ toast("Kunde inte spara"); });
+}
+
+/* Hydrering. Sidan ritas först med det den har, sedan fylls den på.
+   Första målningen väntar aldrig på nätet. */
+function hydrate(){
+  if (!(window.claude && typeof window.claude.use === "function")) return;
+  window.claude.use("db").then(function(db){
+    if (!db) return;                         // ingen db i den här vyn: kör vidare lokalt
+    DB = db; storage = "db";
+    return db.doc("app/config").get().then(function(cfg){
+      if (cfg.exists && !touched){
+        var c = clone(cfg.data());
+        if (c.start) state.start = c.start;
+        if (c.mode)  state.mode  = c.mode;
+        if (Array.isArray(c.items) && c.items.length) state.items = c.items;
+      }
+      return db.collection("days").get();
+    }).then(function(snap){
+      snap.docs.forEach(function(doc){
+        if (state.days[doc.id]) return;      // rör inte en dag användaren redan öppnat
+        var v = clone(doc.data());
+        var day = {
+          values: v.values || {},
+          reflection: v.reflection || "",
+          closed: !!v.closed
+        };
+        // Bara en stängd dag bär med sig sin lista. Att hitta på en åt en
+        // öppen dag skulle återskapa buggen: dagen skulle frysas fast igen.
+        if (day.closed && v.items) day.items = v.items;
+        state.days[doc.id] = day;
+      });
+      render();
+    });
+  }).catch(function(){});
+}
 
 /* ==========================================================================
    2. DATUM
@@ -286,7 +362,7 @@ function hit(item, v){
 }
 function scoreDay(day, mode){
   var acc = {islamic:[0,0], discipline:[0,0], mental:[0,0], total:[0,0]};
-  var items = day && day.items ? day.items : state.items;
+  var items = itemsFor(day);
   for (var i=0; i<items.length; i++){
     var it = items[i];
     var w  = mode === "weighted" ? (it.weight || 1) : 1;
@@ -301,14 +377,24 @@ function pct(pair){ return pair[1] ? Math.round(pair[0] / pair[1] * 1000) / 10 :
 
 /* ==========================================================================
    4. DAGSOBJEKT
-   Snapshot tas vid första skrivningen. Ändrar du listan dag 12 rörs inte dag 3.
+   Snapshot tas när dagen STÄNGS — inte när den skapas.
+   En öppen dag följer den levande listan, så att lägga till och ta bort
+   punkter slår igenom direkt. En stängd dag behåller listan den bedömdes
+   mot, så att gammal historik inte skrivs om av dagens redigeringar.
    ========================================================================== */
 var current = todayKey();
+
+/* Enda stället som avgör vilken lista en dag ska visas och räknas mot.
+   Både renderToday och scoreDay går via den här — annars kan de svara
+   olika på samma fråga, och det var precis buggen. */
+function itemsFor(day){
+  return (day && day.closed && day.items) ? day.items : state.items;
+}
 
 function getDay(key, create){
   var d = state.days[key];
   if (!d && create){
-    d = { values:{}, items: clone(state.items), reflection:"", closed:false };
+    d = { values:{}, reflection:"", closed:false };   // ingen items här
     state.days[key] = d;
   }
   return d;
@@ -343,14 +429,15 @@ function render(){
 
 function renderToday(){
   var day   = getDay(current, false);
-  var items = day ? day.items : state.items;
+  var items = itemsFor(day);
   var idx   = dayIndex(current);
-  var isNow = current === todayKey();
+  var isNow   = current === todayKey();
+  var isFirst = current === state.start;
 
   var html = '<div class="daynav">' +
-    '<button data-act="step" data-n="-1">‹ Föregående</button>' +
-    '<button data-act="step" data-n="0"' + (isNow ? " disabled" : "") + '>Idag</button>' +
-    '<button data-act="step" data-n="1"' + (isNow ? " disabled" : "") + '>Nästa ›</button>' +
+    '<button data-act="step" data-n="-1"' + (isFirst ? " disabled" : "") + '>‹ Föregående</button>' +
+    '<button data-act="step" data-n="0"'  + (isNow   ? " disabled" : "") + '>Idag</button>' +
+    '<button data-act="step" data-n="1"'  + (isNow   ? " disabled" : "") + '>Nästa ›</button>' +
   '</div>';
 
   ["islamic","discipline","mental"].forEach(function(cat){
@@ -493,9 +580,12 @@ document.addEventListener("click", function(e){
   if (act === "goto"){ current = el.dataset.k; view = "Today"; render(); return; }
   if (act === "step"){
     var n = +el.dataset.n;
-    current = n === 0 ? todayKey() : addDays(current, n);
-    if (atNoon(current) > atNoon(todayKey())) current = todayKey();   // ingen framtid
-    render(); return;
+    var next = n === 0 ? todayKey() : addDays(current, n);
+    // Klampa till [startdatum, idag]. Utanför det finns ingen ruta i
+    // 30-dagarsrutnätet, så data där hade blivit osynlig.
+    if (atNoon(next) > atNoon(todayKey()))    next = todayKey();
+    if (atNoon(next) < atNoon(state.start))   next = state.start;
+    current = next; render(); return;
   }
 
   if (act === "cycle"){                       // tom → ✓ → ✗ → tom
@@ -531,8 +621,18 @@ document.addEventListener("click", function(e){
   }
   if (act === "wipe"){
     ask("Radera allt?", "Alla 30 dagar, punkter och reflektioner tas bort. Går inte att ångra.",
-      function(){ try{localStorage.removeItem(KEY);}catch(e){}
-        state = load(); current = todayKey(); view = "Today"; render(); });
+      function(){
+        var keys = Object.keys(state.days);
+        try { localStorage.removeItem(KEY); } catch(e){}
+        if (DB){
+          // Radera varje dagdokument — att ta bort config räcker inte,
+          // dagarna ligger i en egen collection och skulle överleva.
+          keys.forEach(function(k){ DB.doc("days/" + k).delete().catch(function(){}); });
+          DB.doc("app/config").delete().catch(function(){});
+        }
+        dirtyDays = {}; dirtyCfg = false; clearTimeout(flushTimer);
+        state = blank(); current = todayKey(); view = "Today"; render();
+      });
     return;
   }
 });
@@ -610,6 +710,7 @@ window.addEventListener("focus", checkRollover);
 window.addEventListener("pageshow", checkRollover);
 
 render();
+hydrate();
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./mizan-sw.js", { scope: "./mizan" }).catch(function(){});
